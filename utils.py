@@ -99,7 +99,7 @@ def from_openbb_to_langchain_func(openbb_command_root, openbb_callable, openbb_s
     outputs = _fetch_outputs(openbb_schema)
     description = openbb_callable.__doc__.split("\n")[0]
     description += "\nThe following data is available:\n\n"
-    description += ", ".join(e[0] for e in outputs)
+    description += ", ".join(e[0].replace("_", " ") for e in outputs)
 
     tool = StructuredTool(
         name = func_name,
@@ -135,8 +135,6 @@ def map_openbb_collection_to_langchain_tools(openbb_commands_root: Union[str, Li
     """
     openbb_commands_root_to_iterate = [openbb_commands_root] if isinstance(openbb_commands_root, str) else openbb_commands_root
 
-    print(openbb_commands_root)
-    print(openbb_commands_root_to_iterate)
     tools: List = []
     for obb_cmd_root in openbb_commands_root_to_iterate:
         schemas = _fetch_schemas(obb_cmd_root)
