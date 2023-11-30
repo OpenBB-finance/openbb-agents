@@ -133,10 +133,10 @@ def map_openbb_collection_to_langchain_tools(openbb_commands_root: Union[str, Li
 
 
     """
-    openbb_commands_root_to_iterate = [openbb_commands_root] if isinstance(openbb_commands_root, str) else openbb_commands_root
+    openbb_commands_root_list = [openbb_commands_root] if isinstance(openbb_commands_root, str) else openbb_commands_root
 
     tools: List = []
-    for obb_cmd_root in openbb_commands_root_to_iterate:
+    for obb_cmd_root in openbb_commands_root_list:
         schemas = _fetch_schemas(obb_cmd_root)
         callables = _fetch_callables(obb_cmd_root)
         tools += map_openbb_functions_to_langchain_tools(
