@@ -3,6 +3,7 @@ import inspect
 
 from types import ModuleType
 
+from typing import Union, List
 from langchain.tools import StructuredTool
 from openbb import obb
 from pydantic.v1 import create_model, BaseModel
@@ -122,8 +123,8 @@ def map_openbb_functions_to_langchain_tools(openbb_command_root, schemas_dict, c
     return tools
 
 
-def map_openbb_collection_to_langchain_tools(openbb_command_root: str) -> list[StructuredTool]:
-    """Map a collection of OpenBB callables from a commad root to Langchain StructuredTools.
+def map_openbb_collection_to_langchain_tools(openbb_commands_root: Union[str, List[str]]) -> list[StructuredTool]:
+    """Map a collection of OpenBB callables from a command root to Langchain StructuredTools.
 
     Examples
     --------
@@ -132,11 +133,17 @@ def map_openbb_collection_to_langchain_tools(openbb_command_root: str) -> list[S
 
 
     """
-    schemas = _fetch_schemas(openbb_command_root)
-    callables = _fetch_callables(openbb_command_root)
-    tools = map_openbb_functions_to_langchain_tools(
-        openbb_command_root=openbb_command_root,
-        schemas_dict=schemas,
-        callables_dict=callables
-    )
+    openbb_commands_root_to_iterate = [openbb_commands_root] if isinstance(openbb_commands_root, str) else openbb_commands_root
+
+    print(openbb_commands_root)
+    print(openbb_commands_root_to_iterate)
+    tools: List = []
+    for obb_cmd_root in openbb_commands_root_to_iterate:
+        schemas = _fetch_schemas(obb_cmd_root)
+        callables = _fetch_callables(obb_cmd_root)
+        tools += map_openbb_functions_to_langchain_tools(
+            openbb_command_root=obb_cmd_root,
+            schemas_dict=schemas,
+            callables_dict=callables
+        )
     return tools
