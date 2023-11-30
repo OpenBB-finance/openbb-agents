@@ -86,8 +86,8 @@ def return_results(func):
     return wrapper_func
 
 
-def from_openbb_to_langchain_func(openbb_callable, openbb_schema):
-    func_name = openbb_callable.__name__
+def from_openbb_to_langchain_func(openbb_command_root, openbb_callable, openbb_schema):
+    func_name = openbb_command_root + "/" + openbb_callable.__name__
     func_schema = openbb_schema['openbb']['QueryParams']['fields']
     
     pydantic_model = from_schema_to_pydantic_model(
@@ -110,10 +110,11 @@ def from_openbb_to_langchain_func(openbb_callable, openbb_schema):
     return tool
 
 
-def map_openbb_functions_to_langchain_tools(schemas_dict, callables_dict):
+def map_openbb_functions_to_langchain_tools(openbb_command_root, schemas_dict, callables_dict):
     tools = []
     for route in callables_dict.keys():
         tool = from_openbb_to_langchain_func(
+            openbb_command_root=openbb_command_root,
             openbb_callable=callables_dict[route],
             openbb_schema=schemas_dict[route]
         )
@@ -134,6 +135,7 @@ def map_openbb_collection_to_langchain_tools(openbb_command_root: str) -> list[S
     schemas = _fetch_schemas(openbb_command_root)
     callables = _fetch_callables(openbb_command_root)
     tools = map_openbb_functions_to_langchain_tools(
+        openbb_command_root=openbb_command_root,
         schemas_dict=schemas,
         callables_dict=callables
     )
