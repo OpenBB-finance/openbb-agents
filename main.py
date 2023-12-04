@@ -15,19 +15,22 @@ from langchain.output_parsers import PydanticOutputParser
 from langchain.pydantic_v1 import BaseModel, Field
 from langchain.output_parsers import RetryWithErrorOutputParser
 from langchain.llms import OpenAI
+from fastapi import FastAPI
+from pydantic import BaseModel
+from typing import List
 
 os.environ["TOKENIZERS_PARALLELISM"] = "False"  # Avoid some warnings from HuggingFace
 
 
 # Set up OpenAI API key
 import openai
-os.environ["OPENAI_API_KEY"] = ""
-openai.api_key = ""
+os.environ["OPENAI_API_KEY"] = "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"
+openai.api_key = "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"
 
 # Set up OpenBB Personal Access Token from https://my.openbb.co/app/platform/pat
 from openbb import obb
 from utils import map_openbb_collection_to_langchain_tools  # provides access to OpenBB Tools
-obb.account.login(pat="")
+obb.account.login(pat="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoX3Rva2VuIjoialNYaHpIdmVQVkRVb3RMYTdMelBPZ3RVNGwzcnZ6aTFBVWgyZm9OaSIsImV4cCI6MTczMjUxNjcwMn0.EPplkei0bbCdJWdXv0LsJY5kWqujpnk0O_3_unSGcvE")
 
 
 class SubQuestion(BaseModel):
@@ -331,7 +334,34 @@ Return only your answer as a bulleted list as a single string. Don't respond wit
     return result.content
 
 
-if __name__ == '__main__':
+#     user_query =  """\
+# Check what are TSLA peers. From those, check which one has the highest market cap.
+# Then, on the ticker that has the highest market cap get the most recent price target estimate from an analyst,
+# and tell me who it was and on what date the estimate was made.
+# """
+
+    #user_query = "Perform a fundamentals financial analysis of AMZN using the most recently available data. What do you find that's interesting?"
+
+from fastapi.middleware.cors import CORSMiddleware
+
+app = FastAPI()
+
+# Enable CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Define a Pydantic model for the request body
+class Query(BaseModel):
+    user_query: str
+
+# Define a POST route
+@app.post("/analyze")
+def analyze(query: Query):
     openbb_tools = map_openbb_collection_to_langchain_tools(
         openbb_commands_root=[
             "/equity/fundamental",
@@ -339,14 +369,5 @@ if __name__ == '__main__':
             "/equity/estimates"
         ]
     )
-
-#     user_query =  """\
-# Check what are TSLA peers. From those, check which one has the highest market cap.
-# Then, on the ticker that has the highest market cap get the most recent price target estimate from an analyst,
-# and tell me who it was and on what date the estimate was made.
-# """
-
-    user_query = "Perform a fundamentals financial analysis of AMZN using the most recently available data. What do you find that's interesting?"
-
-    output = openbb_agent(openbb_tools, user_query)
-    print(output)
+    output = openbb_agent(openbb_tools, query.user_query)
+    return {"result": output}
