@@ -24,13 +24,13 @@ os.environ["TOKENIZERS_PARALLELISM"] = "False"  # Avoid some warnings from Huggi
 
 # Set up OpenAI API key
 import openai
-os.environ["OPENAI_API_KEY"] = "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"
-openai.api_key = "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"
+os.environ["OPENAI_API_KEY"] = ""
+openai.api_key = ""
 
 # Set up OpenBB Personal Access Token from https://my.openbb.co/app/platform/pat
 from openbb import obb
 from utils import map_openbb_collection_to_langchain_tools  # provides access to OpenBB Tools
-obb.account.login(pat="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoX3Rva2VuIjoialNYaHpIdmVQVkRVb3RMYTdMelBPZ3RVNGwzcnZ6aTFBVWgyZm9OaSIsImV4cCI6MTczMjUxNjcwMn0.EPplkei0bbCdJWdXv0LsJY5kWqujpnk0O_3_unSGcvE")
+obb.account.login(pat="")
 
 
 class SubQuestion(BaseModel):
