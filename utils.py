@@ -1,10 +1,12 @@
 """Load OpenBB functions at OpenAI tools for function calling in Langchain"""
 import inspect
+import tiktoken
 
 from types import ModuleType
 
 from typing import Union, List
 from langchain.tools import StructuredTool
+from langchain.tools.base import ToolException
 from openbb import obb
 from pydantic.v1 import create_model, BaseModel
 from pydantic.v1.fields import FieldInfo
@@ -83,7 +85,15 @@ def from_schema_to_pydantic_model(model_name, schema):
 def return_results(func):
     """Return the results rather than the OBBject."""
     def wrapper_func(*args, **kwargs):
-        return func(*args, **kwargs).results
+        try:
+            result = func(*args, **kwargs).results
+            encoding = tiktoken.encoding_for_model("gpt-4-1106-preview")
+            num_tokens = len(encoding.encode(str(result)))
+            if num_tokens > 90000:
+                raise ToolException("The returned output is too large to fit into context. Consider using another tool, or trying again with different input arguments.")
+            return result
+        except Exception as err:  # Necessary in this case, since we want the LLM to be able to correct a bad call.
+            raise ToolException(err)
     return wrapper_func
 
 
@@ -105,7 +115,8 @@ def from_openbb_to_langchain_func(openbb_command_root, openbb_callable, openbb_s
         name = func_name,
         func=return_results(openbb_callable),
         description=description,
-        args_schema=pydantic_model
+        args_schema=pydantic_model,
+        handle_tool_error=True,
     )
 
     return tool
