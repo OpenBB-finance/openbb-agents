@@ -33,11 +33,16 @@ def _fetch_schemas(openbb_command_root: str) -> dict:
 
 def _fetch_callables(openbb_command_root):
     module = _fetch_obb_module(openbb_command_root)
-    members = inspect.getmembers(module)
-    members_dict = {x[0]: x[1] for x in members if '__' not in x[0] and '_run' not in x[0]}
+
+    if inspect.ismethod(module):  # Handle case where a final command endpoint is passed.
+        members_dict = {
+            module.__name__: module
+        }
+    else:  # If a command root is passed instead
+        members = inspect.getmembers(module)
+        members_dict = {x[0]: x[1] for x in members if '__' not in x[0] and '_run' not in x[0]}
 
     schemas = _fetch_schemas(openbb_command_root)
-
     # Create callables dict, with the same key as used in the schemas
     callables = {}
     for k in schemas.keys():
@@ -87,8 +92,7 @@ def return_results(func):
     return wrapper_func
 
 
-def from_openbb_to_langchain_func(openbb_command_root, openbb_callable, openbb_schema):
-    func_name = openbb_command_root + "/" + openbb_callable.__name__
+def from_openbb_to_langchain_func(func_name, openbb_callable, openbb_schema):
     func_schema = openbb_schema['openbb']['QueryParams']['fields']
     
     pydantic_model = from_schema_to_pydantic_model(
@@ -115,7 +119,7 @@ def map_openbb_functions_to_langchain_tools(openbb_command_root, schemas_dict, c
     tools = []
     for route in callables_dict.keys():
         tool = from_openbb_to_langchain_func(
-            openbb_command_root=openbb_command_root,
+            func_name=route,
             openbb_callable=callables_dict[route],
             openbb_schema=schemas_dict[route]
         )
