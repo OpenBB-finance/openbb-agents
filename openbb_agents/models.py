@@ -13,7 +13,7 @@ class SubQuestion(BaseModel):
     tool_query: str = Field(
         description="The query to pass to the `fetch_tools` function to retrieve the appropriate tool to answer the question."
     )
-    depends_on: Optional[list[int]] = Field(
+    depends_on: list[int] = Field(
         description="The list of subquestion ids whose answer is required to answer this subquestion.",
         default=[]
     )
@@ -27,8 +27,8 @@ class SubQuestionList(BaseModel):
 
 class AnsweredSubQuestion(BaseModel):
     """An answered subquestion."""
-    question: str = Field(
-        description="The subquestion."
+    subquestion: SubQuestion = Field(
+        description="The subquestion that has been answered."
     )
     answer: str = Field(
         description="The answer to the subquestion."
@@ -37,13 +37,16 @@ class AnsweredSubQuestion(BaseModel):
 
 class SubQuestionAgentConfig(BaseModel):
     """Config required to instantiate an agent, and have it answer a subquestion using tools."""
+    query: str = Field(
+        description="The top-level query to be answered."
+    )
     subquestion: SubQuestion = Field(
-        description="The subquestion to be answered by the agent."
+        description="The specific subquestion to be answered by the agent."
     )
     tools: list[StructuredTool] = Field(
         description="A list of langchain StructuredTools for the agent to use."
     )
-    dependencies: Optional[list[AnsweredSubQuestion]] = Field(
+    dependencies: list[AnsweredSubQuestion] = Field(
         description="A list of previously-answered subquestions required by the agent to answer the question.",
         default=[]
     )

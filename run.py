@@ -1,8 +1,5 @@
-import logging
-import logging.config
-
 from openbb_agents.utils import map_openbb_collection_to_langchain_tools
-from openbb_agents.agent import openbb_agent
+from openbb_agents import agent
 
 import logging
 import logging.config
@@ -52,5 +49,6 @@ openbb_tools = map_openbb_collection_to_langchain_tools(
 )
 
 user_query = "Perform a fundamentals financial analysis of AMZN using the most recently available data. What do you find that's interesting?"
-user_query = "Who are TSLA's peers?"
-output = openbb_agent(openbb_tools, user_query)
+user_query = "Who are TSLA's peers? What is their respective market cap? Return the results in _descending_ order of market cap."
+
+agent.openbb_agent(openbb_tools, user_query)

@@ -7,17 +7,19 @@ from langchain.agents.format_scratchpad import format_log_to_str
 from langchain.agents import AgentExecutor
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.schema import Document
-from langchain.vectorstores import FAISS
+from langchain.vectorstores import FAISS, VectorStore
 from langchain import hub
 from langchain.tools.render import render_text_description_and_args
 from langchain.tools import StructuredTool
 from langchain.output_parsers import PydanticOutputParser
 
+from typing import Optional
+
 from openbb import obb
 
 from .utils import map_openbb_collection_to_langchain_tools
-from .models import SubQuestionList, SubQuestion, SubQuestionAgentConfig
-from .prompts import SUBQUESTION_GENERATOR_PROMPT, FINAL_RESPONSE_PROMPT_TEMPLATE
+from .models import AnsweredSubQuestion, SubQuestionList, SubQuestion, SubQuestionAgentConfig
+from .prompts import SUBQUESTION_GENERATOR_PROMPT, FINAL_RESPONSE_PROMPT_TEMPLATE, SUBQUESTION_ANSWER_PROMPT
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +44,7 @@ def generate_subquestions(query: str, model="gpt-4"):
         format_instructions=subquestion_parser.get_format_instructions()
     )
     
-    llm = ChatOpenAI(model=model)
+    llm = ChatOpenAI(model=model, temperature=0.1)
     subquestion_chain = {"input": lambda x: x["input"]} | prompt | llm | subquestion_parser
     subquestion_list = subquestion_chain.invoke({"input": query})
 
@@ -85,42 +87,151 @@ def make_react_agent(tools, model="gpt-4-1106-preview"):
     )
     return agent_executor
 
+def generate_subquestion_answer(subquestion_agent_config: SubQuestionAgentConfig) -> AnsweredSubQuestion:
+    """Generate an answer to a subquestion, using tools and dependencies as necessary."""
 
-def _render_subquestions_and_answers(subquestions):
-    "Combines all subquestions and their answers"
-    output = ""
-    for subquestion in subquestions:
-        output += "Subquestion: " + subquestion["subquestion"] + "\n"
-        output += "Observations: \n" + str(subquestion["observation"]) + "\n\n"
+    logger.info(
+        "Request to generate answer for subquestion.",
+        extra={
+            "subquestion": subquestion_agent_config.subquestion.question,
+            "dependencies": [
+                {
+                    "subquestion": subq_and_a.subquestion.question,
+                    "answer": subq_and_a.answer
+                }
+                for subq_and_a in subquestion_agent_config.dependencies
+            ],
+            "tools": [tool.name for tool in subquestion_agent_config.tools]
+        }
+    )
 
-    return output
 
-def generate_subquestion_answer(subquestion: SubQuestion, tool_vector_store):
-    """Generate an answer to a subquestion"""
+    # Format the dependency strings
+    dependencies_str = ""
+    for answered_subquestion in subquestion_agent_config.dependencies:
+        dependencies_str += "subquestion: " + answered_subquestion.subquestion.question + "\n"
+        dependencies_str += "observations:\n" + answered_subquestion.answer + "\n\n"
 
 
-def generate_final_response(query: str, subquestions: dict):
+    prompt = SUBQUESTION_ANSWER_PROMPT.format(
+        query=subquestion_agent_config.query,
+        subquestion_query=subquestion_agent_config.subquestion.question,
+        dependencies=dependencies_str,
+    )
+
+    try:
+        result = make_react_agent(tools=subquestion_agent_config.tools).invoke({"input": prompt})
+        output = result["output"]
+    except Exception as err:  # Terrible practice, but it'll do for now.
+        print(err)
+        # We'll include the error message in the future
+        output = "I was unable to answer the subquestion using the available tools."
+
+    answered_subquestion =  AnsweredSubQuestion(
+        subquestion=subquestion_agent_config.subquestion,
+        answer=output
+    )
+
+    logger.info(
+        "Answered subquestion.",
+        extra={
+            "subquestion": answered_subquestion.subquestion.question,
+            "answer": answered_subquestion.answer,
+        }
+    )
+
+    return answered_subquestion
+
+def generate_final_response(query: str, answered_subquestions: list[AnsweredSubQuestion]) -> str:
     """Generate the final response to a query given answer to a list of subquestions."""
+
+    logger.info(
+        "Request to generate final response.",
+        extra={
+            "query": query,
+            "answered_subquestions": [
+                {
+                    "subquestion": subq_and_a.subquestion.question,
+                    "answer": subq_and_a.answer
+                }
+                for subq_and_a in answered_subquestions
+            ]
+        }
+    )
+
     system_message =  FINAL_RESPONSE_PROMPT_TEMPLATE
     prompt = ChatPromptTemplate.from_messages([("system", system_message)])
-    
+
     llm = ChatOpenAI(model="gpt-4")  # Let's use the big model for the final answer.
-    
+
     chain = (
         {
             "input": lambda x: x["input"],
-            "subquestions": lambda x: _render_subquestions_and_answers(x["subquestions"]),
+            "subquestions": lambda x: _render_subquestions_and_answers(x['answered_subquestions']),
         }
         | prompt
         | llm
     )
-    
-    result = chain.invoke({"input": query, "subquestions": subquestions})
 
+    result = chain.invoke({"input": query, "answered_subquestions": answered_subquestions})
+    return str(result.content)
+
+def openbb_agent(
+        openbb_tools: list[StructuredTool],
+        query: str,
+    ):
+
+    logger.info("Creating vector db of tools.")
+    vector_index = _create_tool_index(tools=openbb_tools)
+
+    logger.info("Generating subquestions for query: %s", query)
+    subquestions = generate_subquestions(query)
+    logger.info("Generated subquestions.", extra={"subquestions": subquestions})
+
+    answered_subquestions: list[AnsweredSubQuestion] = []
+    for subq in subquestions.subquestions:
+
+        subquestion_agent_config = SubQuestionAgentConfig(
+            query=query,
+            subquestion=subq,
+            tools=_get_tools(vector_index=vector_index, tools=openbb_tools, query=subq.tool_query),
+            dependencies=_get_dependencies(answered_subquestions=answered_subquestions, subquestion=subq)
+        )
+
+        # Answer the subquestion
+        answered_subquestion = generate_subquestion_answer(subquestion_agent_config)
+        logging.info(
+            "Answered Subquestion.",
+            extra={
+                "subquestion": answered_subquestion.subquestion.question,
+                "answer": answered_subquestion.answer
+            }
+        )
+
+        answered_subquestions.append(answered_subquestion)
+
+    result = generate_final_response(
+        query=query,
+        answered_subquestions=answered_subquestions
+    )
+
+    logger.info("Final Answer: %s", result)
+    print("============")
+    print("Final Answer")
+    print("============")
+    print(result)
     return result
 
+def _render_subquestions_and_answers(answered_subquestions: list[AnsweredSubQuestion]) -> str:
+    "Combines all subquestions and their answers"
+    output = ""
+    for answered_subq in answered_subquestions:
+        output += "Subquestion: " + answered_subq.subquestion.question + "\n"
+        output += "Observations: \n" + answered_subq.answer + "\n\n"
 
-def _create_tool_index(tools: list[StructuredTool]) -> FAISS:
+    return output
+
+def _create_tool_index(tools: list[StructuredTool]) -> VectorStore:
     """Create a tool index of LangChain StructuredTools."""
     docs = [
         Document(page_content=t.description, metadata={"index": i})
@@ -131,107 +242,31 @@ def _create_tool_index(tools: list[StructuredTool]) -> FAISS:
     return vector_store
 
 
-def openbb_agent(
-        openbb_tools: list[langchain.tools.base.StructuredTool],
-        query: str,
-    ):
-
-    logger.info("Creating vector db of tools.")
-    vector_store = _create_tool_index(tools=openbb_tools)
-
-    logger.info("Generating subquestions for query: %s", query)
-    subquestion_list = generate_subquestions(query)
-    logger.info("Generated subquestions.", extra={"subquestions": subquestion_list})
-
-    subquestions_and_tools = []
-    for subquestion in subquestion_list.subquestions:
-
-        retriever = vector_store.as_retriever(
-            search_type="similarity_score_threshold",
-            search_kwargs={'score_threshold': 0.65}
-        )
-        docs = retriever.get_relevant_documents(subquestion.tool_query)
-
-        # This is a fallback mechanism in case the threshold is too high,
-        # causing too few tools to be returned.  In this case, we fall back to
-        # getting the top k=2 results with higher similarity scores.
-        if len(docs) < 2:
-            retriever = vector_store.as_retriever(
-                search_kwargs={"k": 2}
-            )
-            docs = retriever.get_relevant_documents(subquestion.tool_query)
-
-        tools = [openbb_tools[d.metadata["index"]] for d in docs]
-
-        subquestion_agent_config = SubQuestionAgentConfig(
-            subquestion=subquestion,
-            tools=tools
-        )
-
-    # Go through each subquestion and create an agent with the necessary tools
-    # and context to execute on it\n
-    for subquestion in subquestions_and_tools:
-        # We handle each question dependency manually since we don't want agents
-        # to share memory as this can go over context length
-        deps = [dep for dep in subquestions_and_tools if dep["id"] in subquestion["depends_on"]]
-
-        dependencies_str = ""
-        for dep in deps:
-            if "observation" in dep:
-                dependencies_str += "subquestion: " + dep["subquestion"] + "\n"
-                dependencies_str += "observations:\n" + str(dep["observation"]) + "\n\n"
-
-        input = f"""\
-Given the following high-level question: {query}
-Answer the following subquestion: {subquestion['subquestion']}
-
-Give your answer in a bullet-point list.
-Explain your reasoning, and make specific reference to the retrieved data.
-Provide the relevant retrieved data as part of your answer.
-Deliberately prefer information retreived from the tools, rather than your internal knowledge.
-
-Remember to use the tools provided to you to answer the question, and STICK TO THE INPUT SCHEMA.
-
-Example output format:
-```
-- <the first observation, insight, and/or conclusion> 
-- <the second observation, insight, and/or conclusion> 
-- <the third observation, insight, and/or conclusion> 
-... REPEAT AS MANY TIMES AS NECESSARY TO ANSWER THE SUBQUESTION.
-```
-
-If necessary, make use of the following subquestions and their answers to answer your subquestion:
-{dependencies_str}
-
-Return only your answer as a bulleted list as a single string. Don't respond with JSON or any other kind of data structure.
-"""
-
-        logger.info("Answering subquestion: %s", subquestion["subquestion"])
-        try:
-            result = make_react_agent(tools=subquestion["tools"]).invoke({"input": input})
-            output = result["output"]
-        except Exception as err:  # Terrible practice, but it'll do for now.
-            print(err)
-            # We'll include the error message in the future
-            output = "I was unable to answer the subquestion using the available tools."
-        subquestion["observation"] = output
-
-        logger.info("Subquestion Answered.", extra={
-            "id": subquestion["id"],
-            "subquestion": subquestion["subquestion"],
-            "dependencies": subquestion["depends_on"],
-            "tools": [tool.name for tool in subquestion["tools"]],
-            "observation": subquestion["observation"]
-        })
-
-    result = generate_final_response(
-        query=query,
-        subquestions=subquestions_and_tools
+def _get_tools(vector_index: VectorStore, tools: list[StructuredTool], query: str) -> list[StructuredTool]:
+    """Retrieve tools from a vector index given a query."""
+    retriever = vector_index.as_retriever(
+        search_type="similarity_score_threshold",
+        search_kwargs={'score_threshold': 0.65}
     )
+    docs = retriever.get_relevant_documents(query)
 
-    logger.info("Final Answer: %s", result.content)
-    print("============")
-    print("Final Answer")
-    print("============")
-    print(result.content)
-    return result.content
+    # This is a fallback mechanism in case the threshold is too high,
+    # causing too few tools to be returned.  In this case, we fall back to
+    # getting the top k=2 results with higher similarity scores.
+    if len(docs) < 2:
+        retriever = vector_index.as_retriever(
+            search_kwargs={"k": 2}
+        )
+        docs = retriever.get_relevant_documents(query)
+
+    tools = [tools[d.metadata["index"]] for d in docs]
+    return tools
+
+
+def _get_dependencies(answered_subquestions: list[AnsweredSubQuestion], subquestion: SubQuestion) -> list[AnsweredSubQuestion]:
+    dependency_subquestions = [
+        answered_subq
+        for answered_subq in answered_subquestions
+        if answered_subq.subquestion.id in subquestion.depends_on
+    ]
+    return dependency_subquestions

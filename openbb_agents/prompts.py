@@ -72,3 +72,28 @@ These are the guidelines you consider when completing your task:
 ]}}
 ```
 """
+
+SUBQUESTION_ANSWER_PROMPT = """\
+Given the following high-level question: {query}
+Answer the following subquestion: {subquestion_query}
+
+Give your answer in a bullet-point list.
+Explain your reasoning, and make specific reference to the retrieved data.
+Provide the relevant retrieved data as part of your answer.
+Deliberately prefer information retreived from the tools, rather than your internal knowledge.
+
+Remember to use the tools provided to you to answer the question, and STICK TO THE INPUT SCHEMA.
+
+Example output format:
+```
+- <the first observation, insight, and/or conclusion>
+- <the second observation, insight, and/or conclusion>
+- <the third observation, insight, and/or conclusion>
+... REPEAT AS MANY TIMES AS NECESSARY TO ANSWER THE SUBQUESTION.
+```
+
+If necessary, make use of the following subquestions and their answers to answer your subquestion:
+{dependencies}
+
+Return only your answer as a bulleted list as a single string. Don't respond with JSON or any other kind of data structure.
+"""
