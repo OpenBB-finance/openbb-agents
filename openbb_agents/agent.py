@@ -10,12 +10,13 @@ from langchain.schema import Document
 from langchain.vectorstores import FAISS
 from langchain import hub
 from langchain.tools.render import render_text_description_and_args
+from langchain.tools import StructuredTool
 from langchain.output_parsers import PydanticOutputParser
 
 from openbb import obb
 
 from .utils import map_openbb_collection_to_langchain_tools
-from .models import SubQuestionList
+from .models import SubQuestionList, SubQuestion, SubQuestionAgentConfig
 from .prompts import SUBQUESTION_GENERATOR_PROMPT, FINAL_RESPONSE_PROMPT_TEMPLATE
 
 logger = logging.getLogger(__name__)
@@ -94,6 +95,9 @@ def _render_subquestions_and_answers(subquestions):
 
     return output
 
+def generate_subquestion_answer(subquestion: SubQuestion, tool_vector_store):
+    """Generate an answer to a subquestion"""
+
 
 def generate_final_response(query: str, subquestions: dict):
     """Generate the final response to a query given answer to a list of subquestions."""
@@ -116,21 +120,26 @@ def generate_final_response(query: str, subquestions: dict):
     return result
 
 
+def _create_tool_index(tools: list[StructuredTool]) -> FAISS:
+    """Create a tool index of LangChain StructuredTools."""
+    docs = [
+        Document(page_content=t.description, metadata={"index": i})
+        for i, t in enumerate(tools)
+    ]
+
+    vector_store = FAISS.from_documents(docs, OpenAIEmbeddings())
+    return vector_store
+
+
 def openbb_agent(
-        openbb_tools: langchain.tools.base.StructuredTool,
+        openbb_tools: list[langchain.tools.base.StructuredTool],
         query: str,
     ):
 
     logger.info("Creating vector db of tools.")
-    docs = [
-        Document(page_content=t.description, metadata={"index": i})
-        for i, t in enumerate(openbb_tools)
-    ]
-
-    vector_store = FAISS.from_documents(docs, OpenAIEmbeddings())
+    vector_store = _create_tool_index(tools=openbb_tools)
 
     logger.info("Generating subquestions for query: %s", query)
-
     subquestion_list = generate_subquestions(query)
     logger.info("Generated subquestions.", extra={"subquestions": subquestion_list})
 
@@ -141,8 +150,8 @@ def openbb_agent(
             search_type="similarity_score_threshold",
             search_kwargs={'score_threshold': 0.65}
         )
-        docs = retriever.get_relevant_documents(subquestion.query)
-        
+        docs = retriever.get_relevant_documents(subquestion.tool_query)
+
         # This is a fallback mechanism in case the threshold is too high,
         # causing too few tools to be returned.  In this case, we fall back to
         # getting the top k=2 results with higher similarity scores.
@@ -150,17 +159,13 @@ def openbb_agent(
             retriever = vector_store.as_retriever(
                 search_kwargs={"k": 2}
             )
-            docs = retriever.get_relevant_documents(subquestion.query)
-            
+            docs = retriever.get_relevant_documents(subquestion.tool_query)
+
         tools = [openbb_tools[d.metadata["index"]] for d in docs]
 
-        subquestions_and_tools.append(
-            {   "id": subquestion.id,
-                "subquestion": subquestion.question,
-                "query": subquestion.query,
-                "tools": tools,
-                "depends_on": subquestion.depends_on,
-            }
+        subquestion_agent_config = SubQuestionAgentConfig(
+            subquestion=subquestion,
+            tools=tools
         )
 
     # Go through each subquestion and create an agent with the necessary tools
