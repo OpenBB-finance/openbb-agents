@@ -49,10 +49,10 @@ openbb_tools = map_openbb_collection_to_langchain_tools(
         "/equity/estimates",
         "/equity/screener",
         "/news/company",
+        "/news/world",
     ]
 )
 
-breakpoint()
 parser = argparse.ArgumentParser(description="Query the OpenBB agent.")
 parser.add_argument('query', metavar="query", type=str, help="The query.")
 
