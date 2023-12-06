@@ -121,7 +121,7 @@ def generate_subquestion_answer(subquestion_agent_config: SubQuestionAgentConfig
 
     try:
         result = make_react_agent(tools=subquestion_agent_config.tools).invoke({"input": prompt})
-        output = result["output"]
+        output = str(result["output"])
     except Exception as err:  # Terrible practice, but it'll do for now.
         print(err)
         # We'll include the error message in the future
@@ -216,10 +216,6 @@ def openbb_agent(
     )
 
     logger.info("Final Answer: %s", result)
-    print("============")
-    print("Final Answer")
-    print("============")
-    print(result)
     return result
 
 def _render_subquestions_and_answers(answered_subquestions: list[AnsweredSubQuestion]) -> str:
