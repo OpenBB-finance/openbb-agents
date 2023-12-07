@@ -19,6 +19,8 @@ python-json-logger = "^2.0.7"
 fastapi = "^0.104.1"
 uvicorn = "^0.24.0"
 argparse = "^1.4.0"
+matplotlib = "^3.8.2"
+openbb-charting = "^1.0.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.11.0"

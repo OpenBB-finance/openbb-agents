@@ -183,3 +183,15 @@ def map_openbb_collection_to_langchain_tools(
             callables_dict=callables,
         )
     return tools
+
+
+def get_all_openbb_tools():
+    tool_routes = list(obb.coverage.commands.keys())
+    tool_routes = [route.replace(".", "/") for route in tool_routes]
+
+    tools = []
+    for route in tool_routes:
+        schema = _fetch_schemas(route)
+        callables = _fetch_callables(route)
+        tools += map_openbb_functions_to_langchain_tools(route, schema, callables)
+    return tools
