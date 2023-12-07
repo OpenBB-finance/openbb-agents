@@ -121,7 +121,6 @@ def openbb_agent_v2(query: str):
 
         # Then attempt to answer subquestion
         print(f"Attempting to answer question: {subquestion.question}")
-        breakpoint()
         answered_subquestion = generate_subquestion_answer(
             SubQuestionAgentConfig(
                 query=query,

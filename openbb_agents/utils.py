@@ -102,7 +102,7 @@ def return_results(func):
 
     def wrapper_func(*args, **kwargs):
         try:
-            result = func(*args, **kwargs).result
+            result = func(*args, **kwargs).results
             encoding = tiktoken.encoding_for_model("gpt-4-1106-preview")
             num_tokens = len(encoding.encode(str(result)))
             if num_tokens > 90000:
