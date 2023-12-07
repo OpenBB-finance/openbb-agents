@@ -28,6 +28,7 @@ subquestion will require the outcome of another in order to fully answer.
 These are the guidelines you consider when completing your task:
 * Be as specific as possible
 * Avoid using acronyms
+* Generate subquestions that can be answered directly from tools, rather than calculated from multiple subquestions.
 * If you can answer the user's query with a single subquestion, only use a single subquestion.
 * The subquestions should be relevant to the user's question
 * The subquestions should be answerable by the tools retrieved by the query to `fetch_tools`
