@@ -42,16 +42,19 @@ logging_config = {
 
 logging.config.dictConfig(logging_config)
 
-parser = argparse.ArgumentParser(description="Query the OpenBB agent.")
-parser.add_argument("query", metavar="query", type=str, help="The query.")
+# parser = argparse.ArgumentParser(description="Query the OpenBB agent.")
+# parser.add_argument("query", metavar="query", type=str, help="The query.")
 
-args = parser.parse_args()
-query = args.query
+# args = parser.parse_args()
+# query = args.query
 
 user_query = "Perform a fundamentals financial analysis of AMZN using the most recently available data. What do you find that's interesting?"
 user_query = "Who are TSLA's peers? What is their respective market cap? Return the results in _descending_ order of market cap."
 
-result = agent.openbb_agent(query)
+
+result = agent.openbb_agent_v2(
+    "Who are the peers of TSLA? Who has the largest market cap?"
+)
 print("============")
 print("Final Answer")
 print("============")

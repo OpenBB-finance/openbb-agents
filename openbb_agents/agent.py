@@ -20,17 +20,125 @@ from openbb import obb
 from .utils import map_openbb_collection_to_langchain_tools, get_all_openbb_tools
 from .models import (
     AnsweredSubQuestion,
+    SelectedToolsList,
     SubQuestionList,
     SubQuestion,
     SubQuestionAgentConfig,
 )
 from .prompts import (
     SUBQUESTION_GENERATOR_PROMPT,
+    SUBQUESTION_GENERATOR_PROMPT_V2,
     FINAL_RESPONSE_PROMPT_TEMPLATE,
     SUBQUESTION_ANSWER_PROMPT,
+    TOOL_SEARCH_PROMPT,
 )
 
 logger = logging.getLogger(__name__)
+
+
+def select_tools(
+    vector_index: VectorStore,
+    tools: list[StructuredTool],
+    subquestion: SubQuestion,
+    answered_subquestions: list[AnsweredSubQuestion],
+):
+    dependencies = _get_dependencies(
+        answered_subquestions=answered_subquestions, subquestion=subquestion
+    )
+    dependencies_str = _render_subquestions_and_answers(dependencies)
+
+    selected_tools_parser = PydanticOutputParser(pydantic_object=SelectedToolsList)
+    prompt = TOOL_SEARCH_PROMPT.format(
+        format_instructions=selected_tools_parser.get_format_instructions(),
+        query=subquestion.question,
+        subquestions=dependencies_str,
+    )
+
+    def search_tools(query: str) -> list[tuple[str, str]]:
+        """Search a vector index for useful funancial tools."""
+        returned_tools = _get_tools(
+            vector_index=vector_index,
+            tools=tools,
+            query=query,
+        )
+        return [(tool.name, tool.description) for tool in returned_tools]
+
+    search_tool = StructuredTool.from_function(search_tools)
+    result = make_react_agent(tools=[search_tool]).invoke({"input": prompt})["output"]
+    return result
+
+
+def generate_subquestions_v2(query: str) -> SubQuestionList:
+    subquestion_parser = PydanticOutputParser(pydantic_object=SubQuestionList)
+
+    system_message = SUBQUESTION_GENERATOR_PROMPT
+    human_message = """\
+        ## User Question
+        {input}
+        """
+
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system", system_message),
+            ("human", human_message),
+        ]
+    )
+    prompt = prompt.partial(
+        format_instructions=subquestion_parser.get_format_instructions()
+    )
+
+    llm = ChatOpenAI(model="gpt-4", temperature=0.1)
+    subquestion_chain = (
+        {"input": lambda x: x["input"]} | prompt | llm | subquestion_parser
+    )
+    subquestion_list = subquestion_chain.invoke({"input": query})
+
+    return subquestion_list
+
+
+def openbb_agent_v2(query: str):
+    print("Generate subquestions...")
+    subquestion_list = generate_subquestions_v2(query)
+    print(subquestion_list)
+
+    openbb_tools = get_all_openbb_tools()
+    vector_index = _create_tool_index(tools=openbb_tools)
+
+    answered_subquestions = []
+    for subquestion in subquestion_list.subquestions:  # TODO: Do in parallel
+        # Fetch tool for subquestion
+        print(f"Attempting to select tools for: {subquestion.question}")
+        selected_tools = select_tools(
+            vector_index=vector_index,
+            tools=openbb_tools,
+            subquestion=subquestion,
+            answered_subquestions=answered_subquestions,
+        )
+        # TODO: Improve filtering of tools (probably by storing them in a dict)
+        tool_names = [tool["name"] for tool in selected_tools["selected_tools"]]
+        subquestion_tools = [tool for tool in openbb_tools if tool.name in tool_names]
+        print(f"Selected tool(s): {subquestion_tools}")
+
+        # Then attempt to answer subquestion
+        print(f"Attempting to answer question: {subquestion.question}")
+        breakpoint()
+        answered_subquestion = generate_subquestion_answer(
+            SubQuestionAgentConfig(
+                query=query,
+                subquestion=subquestion,
+                tools=subquestion_tools,
+                dependencies=_get_dependencies(
+                    answered_subquestions, subquestion
+                ),  # TODO: Just do this in gneerate_subquestion_answer
+            )
+        )
+        answered_subquestions.append(answered_subquestion)
+        print(answered_subquestion)
+
+    # Answer final question
+    return generate_final_response(
+        query=query, answered_subquestions=answered_subquestions
+    )
 
 
 def generate_subquestions(query: str, model="gpt-4"):
