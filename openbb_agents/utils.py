@@ -118,11 +118,14 @@ def return_results(func):
     return wrapper_func
 
 
-def from_openbb_to_langchain_func(func_name, openbb_callable, openbb_schema):
+def from_openbb_to_langchain_func(openbb_command_root, openbb_callable, openbb_schema):
     func_schema = openbb_schema["openbb"]["QueryParams"]["fields"]
-
+    # Lookup the default provider's input arguments...
+    default_provider = obb.coverage.commands[openbb_command_root.replace("/", ".")][0]
+    # ... and add them to the func schema.
+    func_schema.update(openbb_schema[default_provider]["QueryParams"]["fields"])
     pydantic_model = from_schema_to_pydantic_model(
-        model_name=f"{func_name}InputModel", schema=func_schema
+        model_name=f"{openbb_command_root}InputModel", schema=func_schema
     )
 
     outputs = _fetch_outputs(openbb_schema)
@@ -131,7 +134,7 @@ def from_openbb_to_langchain_func(func_name, openbb_callable, openbb_schema):
     description += ", ".join(e[0].replace("_", " ") for e in outputs)
 
     tool = StructuredTool(
-        name=func_name,
+        name=openbb_command_root,  # We use the command root for the name of the tool
         func=return_results(openbb_callable),
         description=description,
         args_schema=pydantic_model,
@@ -147,7 +150,7 @@ def map_openbb_functions_to_langchain_tools(
     tools = []
     for route in callables_dict.keys():
         tool = from_openbb_to_langchain_func(
-            func_name=route,
+            openbb_command_root=route,
             openbb_callable=callables_dict[route],
             openbb_schema=schemas_dict[route],
         )
