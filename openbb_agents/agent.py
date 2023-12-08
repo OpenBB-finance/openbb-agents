@@ -111,7 +111,7 @@ def generate_subquestions_v2(query: str) -> SubQuestionList:
         format_instructions=subquestion_parser.get_format_instructions()
     )
 
-    llm = ChatOpenAI(model="gpt-4", temperature=0.1)
+    llm = ChatOpenAI(model="gpt-4", temperature=0.0)
     subquestion_chain = (
         {"input": lambda x: x["input"]} | prompt | llm | subquestion_parser
     )
@@ -215,7 +215,7 @@ def make_openai_agent(prompt, tools, model="gpt-4-1106-preview", verbose=False):
     return AgentExecutor(agent=chain, tools=tools, verbose=verbose)
 
 
-def make_react_agent(tools, model="gpt-4-1106-preview", verbose=False):
+def make_react_agent(tools, model="gpt-4-1106-preview", temperature=0.2, verbose=True):
     """Create a new ReAct agent from a list of tools."""
 
     # This retrieves the ReAct agent chat prompt template available in Langchain Hub
@@ -230,7 +230,7 @@ def make_react_agent(tools, model="gpt-4-1106-preview", verbose=False):
         tool_names=", ".join([t.name for t in tools]),
     )
 
-    llm = ChatOpenAI(model=model, temperature=0.1).bind(stop=["\nObservation"])
+    llm = ChatOpenAI(model=model, temperature=temperature).bind(stop=["\nObservation"])
 
     chain = (
         {

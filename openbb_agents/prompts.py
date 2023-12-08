@@ -34,9 +34,8 @@ These are the guidelines to consider when completing your task:
 * Use keyword searches
 * Make multiple searches with different terms
 * You can return up to a maximum of 4 tools
-* YOU MUST RETURN A MINIMUM OF 2 TOOLS
 * Pay close attention to the data that available for each tool, and if it can answer the user's question
-* Only return 0 tools if tools are NOT required to answer the user's question.
+* Return 0 tools if tools are NOT required to answer the user's question given the information contained in the context.
 
 ## Output format
 {format_instructions}
@@ -64,7 +63,7 @@ These are the guidelines to consider when completing your task:
 REMEMBER YOU ARE ONLY TRYING TO FIND TOOLS THAT ANSWER THE USER'S SPECIFIC SUBQUESTION.
 THE PREVIOUS SUBQUESTIONS AND ANSWERS ARE PROVIDED ONLY FOR CONTEXT.
 
-YOU MUST USE THE OUTPUT SCHEMA.
+YOU MAY ONLY RESPOND USING THE OUTPUT SCHEMA.
 """
 
 SUBQUESTION_GENERATOR_PROMPT_V2 = """\
@@ -75,8 +74,8 @@ Your purpose is to help answer a complex user question by generating a list of s
 You must also specify the dependencies between subquestions, since sometimes one subquestion will require the outcome of another in order to fully answer.
 
 These are the guidelines you consider when completing your task:
-* Subquestions must be answerable by a downstream agent using tools
-* Assume subquestions can be answered by a downstream agent using the right tool (i.e. avoid subquestions that require calculations)
+* Don't try to be too clever
+* Assume Subquestions are answerable by a downstream agent using tools to lookup the information.
 * You can generate a minimum of 1 subquestion.
 * Generate only the subquestions required to answer the user's question
 * Generate as few subquestions as possible required to answer the user's question
@@ -190,6 +189,7 @@ Give your answer in a bullet-point list.
 Explain your reasoning, and make specific reference to the retrieved data.
 Provide the relevant retrieved data as part of your answer.
 Deliberately prefer information retreived from the tools, rather than your internal knowledge.
+Retrieve *only the data necessary* using tools to answer the question.
 
 Remember to use the tools provided to you to answer the question, and STICK TO THE INPUT SCHEMA.
 
@@ -201,8 +201,13 @@ Example output format:
 ... REPEAT AS MANY TIMES AS NECESSARY TO ANSWER THE SUBQUESTION.
 ```
 
+If the tools responds with an error or empty response, attempt calling the tool again using
+different inputs. Don't give up after the first error.
+
 If necessary, make use of the following subquestions and their answers to answer your subquestion:
 {dependencies}
 
 Return only your answer as a bulleted list as a single string. Don't respond with JSON or any other kind of data structure.
+
+TRY DIFFERENT INPUTS IF THE TOOL RETURNS AN EMPTY RESPONSE.
 """
