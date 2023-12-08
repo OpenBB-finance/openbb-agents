@@ -2,7 +2,11 @@ import logging
 import logging.config
 
 import argparse
-from openbb_agents.utils import map_openbb_collection_to_langchain_tools
+from openbb_agents.models import SubQuestion
+from openbb_agents.utils import (
+    get_all_openbb_tools,
+    map_openbb_collection_to_langchain_tools,
+)
 from openbb_agents import agent
 
 
@@ -52,9 +56,7 @@ user_query = "Perform a fundamentals financial analysis of AMZN using the most r
 user_query = "Who are TSLA's peers? What is their respective market cap? Return the results in _descending_ order of market cap."
 
 
-result = agent.openbb_agent_v2(
-    "Who are the peers of TSLA? Who has the largest market cap?"
-)
+result = agent.openbb_agent_v2("What is the market cap of ZM?")
 print("============")
 print("Final Answer")
 print("============")

@@ -1,15 +1,24 @@
 import logging
 import langchain
 from langchain.chat_models import ChatOpenAI
-from langchain.prompts import ChatPromptTemplate
-from langchain.agents.output_parsers import JSONAgentOutputParser
-from langchain.agents.format_scratchpad import format_log_to_str
-from langchain.agents import AgentExecutor
+from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain.agents.output_parsers import (
+    JSONAgentOutputParser,
+    OpenAIFunctionsAgentOutputParser,
+)
+from langchain.agents.format_scratchpad import (
+    format_log_to_str,
+    format_to_openai_function_messages,
+)
+from langchain.agents import AgentExecutor, AgentType, initialize_agent
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.schema import Document
 from langchain.vectorstores import FAISS, VectorStore
 from langchain import hub
-from langchain.tools.render import render_text_description_and_args
+from langchain.tools.render import (
+    format_tool_to_openai_function,
+    render_text_description_and_args,
+)
 from langchain.tools import StructuredTool
 from langchain.output_parsers import PydanticOutputParser
 
@@ -41,19 +50,10 @@ def select_tools(
     tools: list[StructuredTool],
     subquestion: SubQuestion,
     answered_subquestions: list[AnsweredSubQuestion],
-):
-    dependencies = _get_dependencies(
-        answered_subquestions=answered_subquestions, subquestion=subquestion
-    )
-    dependencies_str = _render_subquestions_and_answers(dependencies)
+) -> SelectedToolsList:
+    """Use an agent to select which tools to use given a subquestion and its dependencies."""
 
-    selected_tools_parser = PydanticOutputParser(pydantic_object=SelectedToolsList)
-    prompt = TOOL_SEARCH_PROMPT.format(
-        format_instructions=selected_tools_parser.get_format_instructions(),
-        query=subquestion.question,
-        subquestions=dependencies_str,
-    )
-
+    # Here we define the tool the agent will use to search the tool index.
     def search_tools(query: str) -> list[tuple[str, str]]:
         """Search a vector index for useful funancial tools."""
         returned_tools = _get_tools(
@@ -63,15 +63,39 @@ def select_tools(
         )
         return [(tool.name, tool.description) for tool in returned_tools]
 
+    dependencies = _get_dependencies(
+        answered_subquestions=answered_subquestions, subquestion=subquestion
+    )
+    dependencies_str = _render_subquestions_and_answers(dependencies)
+
+    selected_tools_list_parser = PydanticOutputParser(pydantic_object=SelectedToolsList)
+
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system", TOOL_SEARCH_PROMPT),
+            ("human", "## User Question:\n{input}"),
+            MessagesPlaceholder(variable_name="agent_scratchpad"),
+        ]
+    )
+
+    prompt = prompt.partial(
+        format_instructions=selected_tools_list_parser.get_format_instructions(),
+        subquestions=dependencies_str,
+    )
+
     search_tool = StructuredTool.from_function(search_tools)
-    result = make_react_agent(tools=[search_tool]).invoke({"input": prompt})["output"]
-    return result
+    agent = make_openai_agent(prompt=prompt, tools=[search_tool])
+    result = agent.invoke({"input": subquestion.question})
+
+    # Parse the output into a pydantic model and return
+    selected_tools = selected_tools_list_parser.parse(result["output"])
+    return selected_tools
 
 
 def generate_subquestions_v2(query: str) -> SubQuestionList:
     subquestion_parser = PydanticOutputParser(pydantic_object=SubQuestionList)
 
-    system_message = SUBQUESTION_GENERATOR_PROMPT
+    system_message = SUBQUESTION_GENERATOR_PROMPT_V2
     human_message = """\
         ## User Question
         {input}
@@ -115,9 +139,9 @@ def openbb_agent_v2(query: str):
             answered_subquestions=answered_subquestions,
         )
         # TODO: Improve filtering of tools (probably by storing them in a dict)
-        tool_names = [tool["name"] for tool in selected_tools["selected_tools"]]
+        tool_names = [tool.name for tool in selected_tools.tools]
         subquestion_tools = [tool for tool in openbb_tools if tool.name in tool_names]
-        print(f"Selected tool(s): {subquestion_tools}")
+        print(f"Retrieved tool(s): {tool_names}")
 
         # Then attempt to answer subquestion
         print(f"Attempting to answer question: {subquestion.question}")
@@ -170,7 +194,28 @@ def generate_subquestions(query: str, model="gpt-4"):
     return subquestion_list
 
 
-def make_react_agent(tools, model="gpt-4-1106-preview"):
+def make_openai_agent(prompt, tools, model="gpt-4-1106-preview", verbose=False):
+    """Create a new OpenAI agent from a list of tools."""
+    llm = ChatOpenAI(model=model)
+    llm_with_tools = llm.bind(
+        functions=[format_tool_to_openai_function(t) for t in tools]
+    )
+    chain = (
+        {
+            "input": lambda x: x["input"],
+            "agent_scratchpad": lambda x: format_to_openai_function_messages(
+                x["intermediate_steps"]
+            ),
+        }
+        | prompt
+        | llm_with_tools
+        | OpenAIFunctionsAgentOutputParser()
+    )
+
+    return AgentExecutor(agent=chain, tools=tools, verbose=verbose)
+
+
+def make_react_agent(tools, model="gpt-4-1106-preview", verbose=False):
     """Create a new ReAct agent from a list of tools."""
 
     # This retrieves the ReAct agent chat prompt template available in Langchain Hub
@@ -185,7 +230,7 @@ def make_react_agent(tools, model="gpt-4-1106-preview"):
         tool_names=", ".join([t.name for t in tools]),
     )
 
-    llm = ChatOpenAI(model=model, temperature=0.0).bind(stop=["\nObservation"])
+    llm = ChatOpenAI(model=model, temperature=0.1).bind(stop=["\nObservation"])
 
     chain = (
         {
@@ -200,7 +245,7 @@ def make_react_agent(tools, model="gpt-4-1106-preview"):
     agent_executor = AgentExecutor(
         agent=chain,
         tools=tools,
-        verbose=False,
+        verbose=verbose,
         return_intermediate_steps=False,
         handle_parsing_errors=True,
     )

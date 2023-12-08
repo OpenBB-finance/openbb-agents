@@ -22,7 +22,7 @@ class SelectedTool(BaseModel):
 class SelectedToolsList(BaseModel):
     """A list of tools selected by an agent to perform a task."""
 
-    selected_tools: list[SelectedTool] = Field(
+    tools: list[SelectedTool] = Field(
         description="A list of SelectedTool objects chosen by an agent."
     )
 
