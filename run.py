@@ -62,9 +62,6 @@ query = args.query
 
 result = agent.openbb_agent(query)
 
-# user_query = "Perform a fundamentals financial analysis of AMZN using the most recently available data. What do you find that's interesting?"
-# user_query = "Who are TSLA's peers? What is their respective market cap? Return the results in _descending_ order of market cap."
-
 print("============")
 print("Final Answer")
 print("============")
