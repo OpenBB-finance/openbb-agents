@@ -11,16 +11,14 @@ from langchain.agents.output_parsers import (
     OpenAIFunctionsAgentOutputParser,
 )
 from langchain.chat_models import ChatOpenAI
-from langchain.embeddings import OpenAIEmbeddings
 from langchain.output_parsers import PydanticOutputParser
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain.schema import Document
 from langchain.tools import StructuredTool
 from langchain.tools.render import (
     format_tool_to_openai_function,
     render_text_description_and_args,
 )
-from langchain.vectorstores import FAISS, VectorStore
+from langchain.vectorstores import VectorStore
 
 from openbb_agents.models import (
     AnsweredSubQuestion,
@@ -38,18 +36,6 @@ from openbb_agents.prompts import (
 from openbb_agents.utils import get_dependencies
 
 logger = logging.getLogger(__name__)
-
-
-def _render_subquestions_and_answers(
-    answered_subquestions: list[AnsweredSubQuestion],
-) -> str:
-    "Combines all subquestions and their answers"
-    output = ""
-    for answered_subq in answered_subquestions:
-        output += "Subquestion: " + answered_subq.subquestion.question + "\n"
-        output += "Observations: \n" + answered_subq.answer + "\n\n"
-
-    return output
 
 
 def generate_final_response(
@@ -307,3 +293,15 @@ def make_react_agent(tools, model="gpt-4-1106-preview", temperature=0.2, verbose
         handle_parsing_errors=True,
     )
     return agent_executor
+
+
+def _render_subquestions_and_answers(
+    answered_subquestions: list[AnsweredSubQuestion],
+) -> str:
+    "Combines all subquestions and their answers"
+    output = ""
+    for answered_subq in answered_subquestions:
+        output += "Subquestion: " + answered_subq.subquestion.question + "\n"
+        output += "Observations: \n" + answered_subq.answer + "\n\n"
+
+    return output
