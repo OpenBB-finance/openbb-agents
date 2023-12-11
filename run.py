@@ -31,6 +31,11 @@ logging_config = {
             "level": "ERROR",
             "propagate": False,
         },
+        "openbb_agents.chains": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
     },
     "root": {  # root logger
         "handlers": ["console"],

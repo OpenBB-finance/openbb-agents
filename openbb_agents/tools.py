@@ -1,5 +1,6 @@
 """Load OpenBB functions at OpenAI tools for function calling in Langchain"""
 import inspect
+from functools import wraps
 from types import ModuleType
 from typing import List, Union
 
@@ -7,7 +8,7 @@ import tiktoken
 from langchain.tools import StructuredTool
 from langchain.tools.base import ToolException
 from openbb import obb
-from pydantic.v1 import BaseModel, create_model
+from pydantic.v1 import BaseModel, ValidationError, create_model
 from pydantic.v1.fields import FieldInfo
 from pydantic_core import PydanticUndefinedType
 
@@ -140,6 +141,21 @@ def from_openbb_to_langchain_func(openbb_command_root, openbb_callable, openbb_s
         handle_tool_error=True,
     )
 
+    # We have to do some magic here to prevent a bad input argument from breaking the langchain flow
+    # https://github.com/langchain-ai/langchain/issues/13662#issuecomment-1831242057
+    def handle_validation_error(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except ValidationError as err:
+                return str(err)
+
+        return wrapper
+
+    # Monkey-patch the run method
+    object.__setattr__(tool, "run", handle_validation_error(tool.run))
+
     return tool
 
 
@@ -157,7 +173,7 @@ def map_openbb_functions_to_langchain_tools(
     return tools
 
 
-def map_openbb_collection_to_langchain_tools(
+def map_openbb_routes_to_langchain_tools(
     openbb_commands_root: Union[str, List[str]]
 ) -> list[StructuredTool]:
     """Map a collection of OpenBB callables from a command root to Langchain StructuredTools.

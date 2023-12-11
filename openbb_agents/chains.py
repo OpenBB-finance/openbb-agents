@@ -202,6 +202,7 @@ def select_tools(
 
 
 def generate_subquestions(query: str) -> SubQuestionList:
+    logger.info("Request to generate subquestions for query: %s", query)
     subquestion_parser = PydanticOutputParser(pydantic_object=SubQuestionList)
 
     system_message = SUBQUESTION_GENERATOR_PROMPT
@@ -271,7 +272,7 @@ def make_openai_agent(prompt, tools, model="gpt-4-1106-preview", verbose=False):
     return AgentExecutor(agent=chain, tools=tools, verbose=verbose)
 
 
-def make_react_agent(tools, model="gpt-4-1106-preview", temperature=0.2, verbose=True):
+def make_react_agent(tools, model="gpt-4-1106-preview", temperature=0.2, verbose=False):
     """Create a new ReAct agent from a list of tools."""
 
     # This retrieves the ReAct agent chat prompt template available in Langchain Hub

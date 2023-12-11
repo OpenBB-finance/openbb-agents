@@ -1,3 +1,6 @@
+import logging
+from typing import Optional
+
 from langchain import hub
 from langchain.agents import AgentExecutor
 from langchain.agents.format_scratchpad import (
@@ -25,16 +28,47 @@ from openbb_agents.chains import (
     select_tools,
 )
 from openbb_agents.models import SubQuestionAgentConfig
-from openbb_agents.tools import get_all_openbb_tools
+from openbb_agents.tools import (
+    get_all_openbb_tools,
+    map_openbb_routes_to_langchain_tools,
+)
 from openbb_agents.utils import get_dependencies
 
+logger = logging.getLogger(__name__)
 
-def openbb_agent(query: str):
-    print("Generating subquestions...")
+
+def openbb_agent(query: str, openbb_tools: Optional[list[str]] = None) -> str:
+    """Answer a query using the OpenBB Agent equipped with tools.
+
+    By default all available openbb tools are used. You can have a query
+    answered using a smaller subset of OpenBB tools by using the `openbb_tools`
+    argument.
+
+    Parameters
+    ----------
+    query : str
+        The query you want to have answered.
+    openbb_tools : optional[list[str]]
+        Optional. Specify the OpenBB collections or commands that you use to use. If not
+        specified, every available OpenBB tool will be used.
+
+    Examples
+    --------
+    >>> # Use all OpenBB tools to answer the query
+    >>> openbb_agent("What is the market cap of TSLA?")
+    >>> # Use only the specified tools to answer the query
+    >>> openbb_agent("What is the market cap of TSLA?", openbb_tools=["/equity/fundamental", "/equity/price/historical"])
+
+    """
+
     subquestion_list = generate_subquestions(query)
-    print(subquestion_list)
-    openbb_tools = get_all_openbb_tools()
-    vector_index = _create_tool_index(tools=openbb_tools)
+    logger.info("Generated subquestions: %s", subquestion_list)
+
+    if openbb_tools:
+        tools = map_openbb_routes_to_langchain_tools(openbb_tools)
+    else:
+        tools = get_all_openbb_tools()
+    vector_index = _create_tool_index(tools=tools)
 
     answered_subquestions = []
     for subquestion in subquestion_list.subquestions:  # TODO: Do in parallel
@@ -42,13 +76,13 @@ def openbb_agent(query: str):
         print(f"Attempting to select tools for: {subquestion.question}")
         selected_tools = select_tools(
             vector_index=vector_index,
-            tools=openbb_tools,
+            tools=tools,
             subquestion=subquestion,
             answered_subquestions=answered_subquestions,
         )
         # TODO: Improve filtering of tools (probably by storing them in a dict)
         tool_names = [tool.name for tool in selected_tools.tools]
-        subquestion_tools = [tool for tool in openbb_tools if tool.name in tool_names]
+        subquestion_tools = [tool for tool in tools if tool.name in tool_names]
         print(f"Retrieved tool(s): {tool_names}")
 
         # Then attempt to answer subquestion
