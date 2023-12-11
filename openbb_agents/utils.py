@@ -102,7 +102,7 @@ def return_results(func):
 
     def wrapper_func(*args, **kwargs):
         try:
-            result = func(*args, **kwargs).results
+            result = func(*args, **kwargs).results.to_df().to_json()
             encoding = tiktoken.encoding_for_model("gpt-4-1106-preview")
             num_tokens = len(encoding.encode(str(result)))
             if num_tokens > 90000:
@@ -127,7 +127,7 @@ def from_openbb_to_langchain_func(func_name, openbb_callable, openbb_schema):
 
     outputs = _fetch_outputs(openbb_schema)
     description = openbb_callable.__doc__.split("\n")[0]
-    description += "\nThe following data is available:\n\n"
+    description += "\nThe following data is available in the output:\n\n"
     description += ", ".join(e[0].replace("_", " ") for e in outputs)
 
     tool = StructuredTool(
@@ -182,4 +182,18 @@ def map_openbb_collection_to_langchain_tools(
             schemas_dict=schemas,
             callables_dict=callables,
         )
+    return tools
+
+
+def get_all_openbb_tools():
+    tool_routes = list(obb.coverage.commands.keys())
+    tool_routes = [
+        route.replace(".", "/") for route in tool_routes if "metrics" not in route
+    ]
+
+    tools = []
+    for route in tool_routes:
+        schema = _fetch_schemas(route)
+        callables = _fetch_callables(route)
+        tools += map_openbb_functions_to_langchain_tools(route, schema, callables)
     return tools
