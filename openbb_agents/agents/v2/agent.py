@@ -3,23 +3,28 @@ from langchain.output_parsers import PydanticOutputParser
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain.tools import StructuredTool
 from langchain.vectorstores import VectorStore
-from openbb_agents.agents.utils import _get_dependencies
+
 from openbb_agents.agents.chains import (
     _render_subquestions_and_answers,
     generate_final_response,
     generate_subquestion_answer,
 )
-from openbb_agents.agents.utils import _create_tool_index, _get_tools, make_openai_agent
+from openbb_agents.agents.prompts import (
+    SUBQUESTION_GENERATOR_PROMPT_V2,
+    TOOL_SEARCH_PROMPT,
+)
+from openbb_agents.agents.utils import (
+    _create_tool_index,
+    _get_dependencies,
+    _get_tools,
+    make_openai_agent,
+)
 from openbb_agents.models import (
     AnsweredSubQuestion,
     SelectedToolsList,
     SubQuestion,
     SubQuestionAgentConfig,
     SubQuestionList,
-)
-from openbb_agents.agents.prompts import (
-    SUBQUESTION_GENERATOR_PROMPT_V2,
-    TOOL_SEARCH_PROMPT,
 )
 from openbb_agents.utils import get_all_openbb_tools
 
@@ -102,6 +107,7 @@ def select_tools(
 def openbb_agent(query: str):
     print("Generate subquestions...")
     subquestion_list = generate_subquestions_v2(query)
+    print(subquestion_list)
     openbb_tools = get_all_openbb_tools()
     vector_index = _create_tool_index(tools=openbb_tools)
 

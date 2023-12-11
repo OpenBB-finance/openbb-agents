@@ -1,9 +1,8 @@
+import argparse
 import logging
 import logging.config
 
-import argparse
 from openbb_agents import agent
-
 
 logging_config = {
     "version": 1,
@@ -53,11 +52,19 @@ parser.add_argument(
     choices=["v1", "v2"],
     default="v2",
 )
+parser.add_argument(
+    "-v",
+    "--verbose",
+    type=bool,
+    help="Include verbose output.",
+    default=False,
+)
 
 args = parser.parse_args()
 query = args.query
 agent_type = args.agent
 
+result = None
 if agent_type == "v1":
     result = agent.openbb_agent_v1(query)
 if agent_type == "v2":

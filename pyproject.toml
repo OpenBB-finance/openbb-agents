@@ -24,10 +24,12 @@ openbb-charting = "^1.0.0"
 [tool.poetry.group.dev.dependencies]
 black = "^23.11.0"
 pre-commit = "^3.5.0"
+isort = "^5.13.0"
+
+[tool.isort]
+profile = "black"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
-[tool.isort]
-profile="black"
