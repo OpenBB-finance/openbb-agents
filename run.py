@@ -2,11 +2,6 @@ import logging
 import logging.config
 
 import argparse
-from openbb_agents.models import SubQuestion
-from openbb_agents.utils import (
-    get_all_openbb_tools,
-    map_openbb_collection_to_langchain_tools,
-)
 from openbb_agents import agent
 
 
@@ -46,17 +41,31 @@ logging_config = {
 
 logging.config.dictConfig(logging_config)
 
-# parser = argparse.ArgumentParser(description="Query the OpenBB agent.")
-# parser.add_argument("query", metavar="query", type=str, help="The query.")
+parser = argparse.ArgumentParser(description="Query the OpenBB agent.")
+parser.add_argument(
+    "query", metavar="query", type=str, help="The query to send to the agent."
+)
+parser.add_argument(
+    "-a",
+    "--agent",
+    type=str,
+    help="The agent to use.",
+    choices=["v1", "v2"],
+    default="v2",
+)
 
-# args = parser.parse_args()
-# query = args.query
+args = parser.parse_args()
+query = args.query
+agent_type = args.agent
 
-user_query = "Perform a fundamentals financial analysis of AMZN using the most recently available data. What do you find that's interesting?"
-user_query = "Who are TSLA's peers? What is their respective market cap? Return the results in _descending_ order of market cap."
+if agent_type == "v1":
+    result = agent.openbb_agent_v1(query)
+if agent_type == "v2":
+    result = agent.openbb_agent_v2(query)
 
+# user_query = "Perform a fundamentals financial analysis of AMZN using the most recently available data. What do you find that's interesting?"
+# user_query = "Who are TSLA's peers? What is their respective market cap? Return the results in _descending_ order of market cap."
 
-result = agent.openbb_agent_v2("What is the market cap of ZM?")
 print("============")
 print("Final Answer")
 print("============")
