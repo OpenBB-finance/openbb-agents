@@ -45,14 +45,6 @@ parser.add_argument(
     "query", metavar="query", type=str, help="The query to send to the agent."
 )
 parser.add_argument(
-    "-a",
-    "--agent",
-    type=str,
-    help="The agent to use.",
-    choices=["v1", "v2"],
-    default="v2",
-)
-parser.add_argument(
     "-v",
     "--verbose",
     type=bool,
@@ -62,13 +54,8 @@ parser.add_argument(
 
 args = parser.parse_args()
 query = args.query
-agent_type = args.agent
 
-result = None
-if agent_type == "v1":
-    result = agent.openbb_agent_v1(query)
-if agent_type == "v2":
-    result = agent.openbb_agent_v2(query)
+result = agent.openbb_agent(query)
 
 # user_query = "Perform a fundamentals financial analysis of AMZN using the most recently available data. What do you find that's interesting?"
 # user_query = "Who are TSLA's peers? What is their respective market cap? Return the results in _descending_ order of market cap."
