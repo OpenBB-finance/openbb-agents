@@ -1,10 +1,8 @@
+import argparse
 import logging
 import logging.config
 
-import argparse
-from openbb_agents.utils import map_openbb_collection_to_langchain_tools
 from openbb_agents import agent
-
 
 logging_config = {
     "version": 1,
@@ -33,6 +31,11 @@ logging_config = {
             "level": "ERROR",
             "propagate": False,
         },
+        "openbb_agents.chains": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
     },
     "root": {  # root logger
         "handlers": ["console"],
@@ -43,15 +46,22 @@ logging_config = {
 logging.config.dictConfig(logging_config)
 
 parser = argparse.ArgumentParser(description="Query the OpenBB agent.")
-parser.add_argument("query", metavar="query", type=str, help="The query.")
+parser.add_argument(
+    "query", metavar="query", type=str, help="The query to send to the agent."
+)
+parser.add_argument(
+    "-v",
+    "--verbose",
+    type=bool,
+    help="Include verbose output.",
+    default=False,
+)
 
 args = parser.parse_args()
 query = args.query
 
-user_query = "Perform a fundamentals financial analysis of AMZN using the most recently available data. What do you find that's interesting?"
-user_query = "Who are TSLA's peers? What is their respective market cap? Return the results in _descending_ order of market cap."
-
 result = agent.openbb_agent(query)
+
 print("============")
 print("Final Answer")
 print("============")
