@@ -5,12 +5,26 @@ from types import ModuleType
 from typing import List, Union
 
 import tiktoken
+from langchain.embeddings import OpenAIEmbeddings
+from langchain.schema import Document
 from langchain.tools import StructuredTool
 from langchain.tools.base import ToolException
+from langchain.vectorstores import FAISS, VectorStore
 from openbb import obb
-from pydantic.v1 import BaseModel, ValidationError, create_model
+from pydantic.v1 import ValidationError, create_model
 from pydantic.v1.fields import FieldInfo
 from pydantic_core import PydanticUndefinedType
+
+
+def create_tool_index(tools: list[StructuredTool]) -> VectorStore:
+    """Create a tool index of LangChain StructuredTools."""
+    docs = [
+        Document(page_content=t.description, metadata={"index": i})
+        for i, t in enumerate(tools)
+    ]
+
+    vector_store = FAISS.from_documents(docs, OpenAIEmbeddings())
+    return vector_store
 
 
 def _fetch_obb_module(openbb_command_root: str) -> ModuleType:

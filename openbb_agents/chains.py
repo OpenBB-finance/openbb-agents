@@ -33,13 +33,15 @@ from openbb_agents.prompts import (
     SUBQUESTION_GENERATOR_PROMPT,
     TOOL_SEARCH_PROMPT,
 )
-from openbb_agents.utils import get_dependencies
+from openbb_agents.utils import get_dependencies, get_verbosity
 
 logger = logging.getLogger(__name__)
 
 
 def generate_final_response(
-    query: str, answered_subquestions: list[AnsweredSubQuestion]
+    query: str,
+    answered_subquestions: list[AnsweredSubQuestion],
+    verbose=get_verbosity(),
 ) -> str:
     """Generate the final response to a query given answer to a list of subquestions."""
 
@@ -60,9 +62,7 @@ def generate_final_response(
     system_message = FINAL_RESPONSE_PROMPT_TEMPLATE
     prompt = ChatPromptTemplate.from_messages([("system", system_message)])
 
-    llm = ChatOpenAI(
-        model="gpt-4", temperature=0.1
-    )  # Let's use the big model for the final answer.
+    llm = ChatOpenAI(model="gpt-4", temperature=0.1, verbose=verbose)
 
     chain = (
         {
@@ -76,13 +76,13 @@ def generate_final_response(
     )
 
     result = chain.invoke(
-        {"input": query, "answered_subquestions": answered_subquestions}
+        {"input": query, "answered_subquestions": answered_subquestions},
     )
     return str(result.content)
 
 
 def generate_subquestion_answer(
-    subquestion_agent_config: SubQuestionAgentConfig,
+    subquestion_agent_config: SubQuestionAgentConfig, verbose=get_verbosity()
 ) -> AnsweredSubQuestion:
     """Generate an answer to a subquestion, using tools and dependencies as necessary."""
 
@@ -116,9 +116,9 @@ def generate_subquestion_answer(
     )
 
     try:
-        result = make_react_agent(tools=subquestion_agent_config.tools).invoke(
-            {"input": prompt}
-        )
+        result = make_react_agent(
+            tools=subquestion_agent_config.tools, verbose=verbose
+        ).invoke({"input": prompt})
         output = str(result["output"])
     except Exception as err:  # Terrible practice, but it'll do for now.
         print(err)
@@ -145,6 +145,7 @@ def select_tools(
     tools: list[StructuredTool],
     subquestion: SubQuestion,
     answered_subquestions: list[AnsweredSubQuestion],
+    verbose: bool = get_verbosity(),
 ) -> SelectedToolsList:
     """Use an agent to select which tools to use given a subquestion and its dependencies."""
 
@@ -179,7 +180,7 @@ def select_tools(
     )
 
     search_tool = StructuredTool.from_function(search_tools)
-    agent = make_openai_agent(prompt=prompt, tools=[search_tool])
+    agent = make_openai_agent(prompt=prompt, tools=[search_tool], verbose=verbose)
     result = agent.invoke({"input": subquestion.question})
 
     # Parse the output into a pydantic model and return
@@ -187,7 +188,7 @@ def select_tools(
     return selected_tools
 
 
-def generate_subquestions(query: str) -> SubQuestionList:
+def generate_subquestions(query: str, verbose=get_verbosity()) -> SubQuestionList:
     logger.info("Request to generate subquestions for query: %s", query)
     subquestion_parser = PydanticOutputParser(pydantic_object=SubQuestionList)
 
@@ -207,7 +208,7 @@ def generate_subquestions(query: str) -> SubQuestionList:
         format_instructions=subquestion_parser.get_format_instructions()
     )
 
-    llm = ChatOpenAI(model="gpt-4", temperature=0.0)
+    llm = ChatOpenAI(model="gpt-4", temperature=0.0, verbose=verbose)
     subquestion_chain = (
         {"input": lambda x: x["input"]} | prompt | llm | subquestion_parser
     )
@@ -237,7 +238,21 @@ def _get_tools(
     return tools
 
 
-def make_openai_agent(prompt, tools, model="gpt-4-1106-preview", verbose=False):
+def _render_subquestions_and_answers(
+    answered_subquestions: list[AnsweredSubQuestion],
+) -> str:
+    "Combines all subquestions and their answers"
+    output = ""
+    for answered_subq in answered_subquestions:
+        output += "Subquestion: " + answered_subq.subquestion.question + "\n"
+        output += "Observations: \n" + answered_subq.answer + "\n\n"
+
+    return output
+
+
+def make_openai_agent(
+    prompt, tools, model="gpt-4-1106-preview", verbose=get_verbosity()
+):
     """Create a new OpenAI agent from a list of tools."""
     llm = ChatOpenAI(model=model)
     llm_with_tools = llm.bind(
@@ -258,7 +273,9 @@ def make_openai_agent(prompt, tools, model="gpt-4-1106-preview", verbose=False):
     return AgentExecutor(agent=chain, tools=tools, verbose=verbose)
 
 
-def make_react_agent(tools, model="gpt-4-1106-preview", temperature=0.2, verbose=False):
+def make_react_agent(
+    tools, model="gpt-4-1106-preview", temperature=0.2, verbose=get_verbosity()
+):
     """Create a new ReAct agent from a list of tools."""
 
     # This retrieves the ReAct agent chat prompt template available in Langchain Hub
@@ -284,7 +301,6 @@ def make_react_agent(tools, model="gpt-4-1106-preview", temperature=0.2, verbose
         | llm
         | JSONAgentOutputParser()
     )
-
     agent_executor = AgentExecutor(
         agent=chain,
         tools=tools,
@@ -293,15 +309,3 @@ def make_react_agent(tools, model="gpt-4-1106-preview", temperature=0.2, verbose
         handle_parsing_errors=True,
     )
     return agent_executor
-
-
-def _render_subquestions_and_answers(
-    answered_subquestions: list[AnsweredSubQuestion],
-) -> str:
-    "Combines all subquestions and their answers"
-    output = ""
-    for answered_subq in answered_subquestions:
-        output += "Subquestion: " + answered_subq.subquestion.question + "\n"
-        output += "Observations: \n" + answered_subq.answer + "\n\n"
-
-    return output
