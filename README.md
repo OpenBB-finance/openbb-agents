@@ -8,7 +8,10 @@ utilizing function calling to interact with the OpenBB platform.
 
 
 ## Set-up
-- Create a new virtual environment
+At present, we currently support Python 3.11. If you're using a earlier version
+of Python, your mileage may vary. We'll be adding wider support very soon!
+
+- Create a new virtual environment, with `poetry `
 - `poetry install`
 
 ## Usage
@@ -36,6 +39,7 @@ There is more functionality coming very soon!
 
 ## Development
 
+### Linting and Formatting
 We're currently experimenting with `ruff` as a drop-in replacement for `black`, `isort` and `pylint`.
 
 You can run linting checks as follows:
@@ -62,3 +66,14 @@ You can install the `pre-commit` hooks as follows:
 ``` sh
 pre-commit install
 ```
+
+### Testing
+
+We are in the process of adding tests.
+
+We use `pytest` as our test-runner:
+
+``` sh
+pytest tests/
+```
+

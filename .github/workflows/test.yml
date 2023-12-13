@@ -1,9 +1,9 @@
-name: Lint
+name: Test
 
 on: [pull_request]
 
 jobs:
-  lint:
+  unit-test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -11,13 +11,20 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+      with:
+        version: 1.7.1
+        virtualenvs-create: true
+        virtualenvs-in-project: true
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python-version }}
+        cache: 'poetry'
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install ruff
-    - name: Run Ruff
-      run : ruff check --output-format=github .
+        poetry install
+    - name: Run Pytest
+      run : poetry run pytest tests/
