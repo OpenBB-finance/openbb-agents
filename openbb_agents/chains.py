@@ -84,7 +84,7 @@ def generate_final_response(
 def generate_subquestion_answer(
     subquestion_agent_config: SubQuestionAgentConfig,
 ) -> AnsweredSubQuestion:
-    """Generate an answer to a subquestion, using tools and dependencies as necessary."""
+    """Generate an answer to a subquestion using tools and dependencies."""
 
     logger.info(
         "Request to generate answer for subquestion.",
@@ -146,7 +146,7 @@ def select_tools(
     subquestion: SubQuestion,
     answered_subquestions: list[AnsweredSubQuestion],
 ) -> SelectedToolsList:
-    """Use an agent to select which tools to use given a subquestion and its dependencies."""
+    """Use an agent to select tools given a subquestion and its dependencies."""
 
     # Here we define the tool the agent will use to search the tool index.
     def search_tools(query: str) -> list[tuple[str, str]]:

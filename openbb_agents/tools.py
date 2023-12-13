@@ -107,13 +107,13 @@ def return_results(func):
             num_tokens = len(encoding.encode(str(result)))
             if num_tokens > 90000:
                 raise ToolException(
-                    "The returned output is too large to fit into context. Consider using another tool, or trying again with different input arguments."
+                    "The returned output is too large to fit into context. Consider using another tool, or trying again with different input arguments."  # noqa: E501
                 )
             return result
-        except (
-            Exception
-        ) as err:  # Necessary in this case, since we want the LLM to be able to correct a bad call.
-            raise ToolException(err)
+        # Necessary to catch general exception in this case, since we want the
+        # LLM to be able to correct a bad call, if possible.
+        except Exception as err:
+            raise ToolException(err) from err
 
     return wrapper_func
 
@@ -141,7 +141,8 @@ def from_openbb_to_langchain_func(openbb_command_root, openbb_callable, openbb_s
         handle_tool_error=True,
     )
 
-    # We have to do some magic here to prevent a bad input argument from breaking the langchain flow
+    # We have to do some magic here to prevent a bad input argument from
+    # breaking the langchain flow
     # https://github.com/langchain-ai/langchain/issues/13662#issuecomment-1831242057
     def handle_validation_error(func):
         @wraps(func)
@@ -174,14 +175,18 @@ def map_openbb_functions_to_langchain_tools(
 
 
 def map_openbb_routes_to_langchain_tools(
-    openbb_commands_root: Union[str, List[str]]
+    openbb_commands_root: Union[str, List[str]],
 ) -> list[StructuredTool]:
-    """Map a collection of OpenBB callables from a command root to Langchain StructuredTools.
+    """Map a collection of OpenBB callables from a command root to StructuredTools.
 
     Examples
     --------
-    >>> fundamental_tools = map_openbb_collection_to_langchain_tools("/equity/fundamental")
-    >>> crypto_price_tools = map_openbb_collection_to_langchain_tools("/crypto/price")
+    >>> fundamental_tools = map_openbb_collection_to_langchain_tools(
+    ...     "/equity/fundamental"
+    ... )
+    >>> crypto_price_tools = map_openbb_collection_to_langchain_tools(
+    ...     "/crypto/price"
+    ... )
 
 
     """

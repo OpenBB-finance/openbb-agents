@@ -57,7 +57,8 @@ def openbb_agent(query: str, openbb_tools: Optional[list[str]] = None) -> str:
     >>> # Use all OpenBB tools to answer the query
     >>> openbb_agent("What is the market cap of TSLA?")
     >>> # Use only the specified tools to answer the query
-    >>> openbb_agent("What is the market cap of TSLA?", openbb_tools=["/equity/fundamental", "/equity/price/historical"])
+    >>> openbb_agent("What is the market cap of TSLA?",
+    ...              openbb_tools=["/equity/fundamental", "/equity/price/historical"])
 
     """
 
