@@ -36,6 +36,7 @@ There is more functionality coming very soon!
 
 ## Development
 
+### Linting and Formatting
 We're currently experimenting with `ruff` as a drop-in replacement for `black`, `isort` and `pylint`.
 
 You can run linting checks as follows:
@@ -62,3 +63,14 @@ You can install the `pre-commit` hooks as follows:
 ``` sh
 pre-commit install
 ```
+
+### Testing
+
+We are in the process of adding tests.
+
+We use `pytest` as our test-runner:
+
+``` sh
+pytest tests/
+```
+

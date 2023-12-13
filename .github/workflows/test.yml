@@ -21,4 +21,4 @@ jobs:
         pip install --upgrade poetry
         poetry install
     - name: Run Pytest
-      run : pytest tests/
+      run : poetry run pytest tests/
