@@ -33,3 +33,32 @@ python run.py "Who are TSLA's peers? What is their respective market cap? Return
 ```
 
 There is more functionality coming very soon!
+
+## Development
+
+We're currently experimenting with `ruff` as a drop-in replacement for `black`, `isort` and `pylint`.
+
+You can run linting checks as follows:
+
+``` sh
+ruff check
+```
+
+Or fix linting errors:
+
+``` sh
+ruff check --fix
+```
+
+Or format the code:
+
+``` sh
+ruff format
+```
+
+We've also included these in the `pre-commit`, if you'd prefer to have these checks run automatically before commiting code. 
+You can install the `pre-commit` hooks as follows:
+
+``` sh
+pre-commit install
+```
