@@ -59,7 +59,7 @@ def openbb_agent(
     answered_subquestions = []
     for subquestion in subquestion_list.subquestions:  # TODO: Do in parallel
         # Fetch tool for subquestion
-        print(f"Attempting to select tools for: {subquestion.question}")
+        logger.info("Attempting to select tools for: %s", {subquestion.question})
         selected_tools = select_tools(
             vector_index=vector_index,
             tools=tools,
@@ -70,10 +70,9 @@ def openbb_agent(
         # TODO: Improve filtering of tools (probably by storing them in a dict)
         tool_names = [tool.name for tool in selected_tools.tools]
         subquestion_tools = [tool for tool in tools if tool.name in tool_names]
-        print(f"Retrieved tool(s): {tool_names}")
+        logger.info("Retrieved tool(s): %s", tool_names)
 
         # Then attempt to answer subquestion
-        print(f"Attempting to answer question: {subquestion.question}")
         answered_subquestion = generate_subquestion_answer(
             SubQuestionAgentConfig(
                 query=query,
@@ -86,7 +85,6 @@ def openbb_agent(
             verbose=verbose,
         )
         answered_subquestions.append(answered_subquestion)
-        print(answered_subquestion)
 
     # Answer final question
     return generate_final_response(

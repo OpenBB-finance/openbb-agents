@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "openbb-agents"
-version = "0.1.0"
+version = "0.0.1a3"
 description = "LLMs X OpenBB"
-authors = ["Your Name <you@example.com>"]
+authors = ["Michael Struwig <michael.struwig@openbb.finance>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
@@ -25,9 +25,6 @@ openbb-charting = "^1.0.0"
 pre-commit = "^3.5.0"
 ruff = "^0.1.7"
 pytest = "^7.4.3"
-
-[tool.isort]
-profile = "black"
 
 [tool.ruff.lint]
 select = [
