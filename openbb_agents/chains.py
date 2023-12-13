@@ -33,7 +33,9 @@ from openbb_agents.prompts import (
     SUBQUESTION_GENERATOR_PROMPT,
     TOOL_SEARCH_PROMPT,
 )
-from openbb_agents.utils import get_dependencies, get_verbosity
+from openbb_agents.utils import get_dependencies
+
+from . import VERBOSE
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +43,7 @@ logger = logging.getLogger(__name__)
 def generate_final_response(
     query: str,
     answered_subquestions: list[AnsweredSubQuestion],
-    verbose=get_verbosity(),
+    verbose=VERBOSE,
 ) -> str:
     """Generate the final response to a query given answer to a list of subquestions."""
 
@@ -82,9 +84,9 @@ def generate_final_response(
 
 
 def generate_subquestion_answer(
-    subquestion_agent_config: SubQuestionAgentConfig, verbose=get_verbosity()
+    subquestion_agent_config: SubQuestionAgentConfig, verbose=VERBOSE
 ) -> AnsweredSubQuestion:
-    """Generate an answer to a subquestion, using tools and dependencies as necessary."""
+    """Generate an answer to a subquestion using tools and dependencies."""
 
     logger.info(
         "Request to generate answer for subquestion.",
@@ -145,9 +147,9 @@ def select_tools(
     tools: list[StructuredTool],
     subquestion: SubQuestion,
     answered_subquestions: list[AnsweredSubQuestion],
-    verbose: bool = get_verbosity(),
+    verbose: bool = VERBOSE,
 ) -> SelectedToolsList:
-    """Use an agent to select which tools to use given a subquestion and its dependencies."""
+    """Use an agent to select tools given a subquestion and its dependencies."""
 
     # Here we define the tool the agent will use to search the tool index.
     def search_tools(query: str) -> list[tuple[str, str]]:
@@ -188,7 +190,7 @@ def select_tools(
     return selected_tools
 
 
-def generate_subquestions(query: str, verbose=get_verbosity()) -> SubQuestionList:
+def generate_subquestions(query: str, verbose=VERBOSE) -> SubQuestionList:
     logger.info("Request to generate subquestions for query: %s", query)
     subquestion_parser = PydanticOutputParser(pydantic_object=SubQuestionList)
 
@@ -250,9 +252,7 @@ def _render_subquestions_and_answers(
     return output
 
 
-def make_openai_agent(
-    prompt, tools, model="gpt-4-1106-preview", verbose=get_verbosity()
-):
+def make_openai_agent(prompt, tools, model="gpt-4-1106-preview", verbose=VERBOSE):
     """Create a new OpenAI agent from a list of tools."""
     llm = ChatOpenAI(model=model)
     llm_with_tools = llm.bind(
@@ -274,7 +274,7 @@ def make_openai_agent(
 
 
 def make_react_agent(
-    tools, model="gpt-4-1106-preview", temperature=0.2, verbose=get_verbosity()
+    tools, model="gpt-4-1106-preview", temperature=0.2, verbose=VERBOSE
 ):
     """Create a new ReAct agent from a list of tools."""
 

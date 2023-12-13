@@ -27,7 +27,8 @@ Your search cycle works as follows:
 ... repeat as many times as necessary until you reach a maximum of 4 tools
 4. Return the list of tools using the output schema.
 
-You can search for tools using the available tool, which uses your inputs to search a vector databse that relies on similarity search.
+You can search for tools using the available tool, which uses your inputs to
+search a vector databse that relies on similarity search.
 
 These are the guidelines to consider when completing your task:
 * Don't use the stock ticker or symbol in the query
@@ -64,7 +65,7 @@ REMEMBER YOU ARE ONLY TRYING TO FIND TOOLS THAT ANSWER THE USER'S SPECIFIC SUBQU
 THE PREVIOUS SUBQUESTIONS AND ANSWERS ARE PROVIDED ONLY FOR CONTEXT.
 
 YOU MAY ONLY RESPOND USING THE OUTPUT SCHEMA.
-"""
+"""  # noqa: E501
 
 SUBQUESTION_GENERATOR_PROMPT = """\
 You are a world-class state-of-the-art agent.
@@ -114,7 +115,7 @@ These are the guidelines you consider when completing your task:
     }}
 ]}}
 ```
-"""
+"""  # noqa: E501
 
 SUBQUESTION_ANSWER_PROMPT = """\
 Given the following high-level question: {query}
@@ -150,4 +151,6 @@ If necessary, make use of the following subquestions and their answers to answer
 {dependencies}
 
 Return only your answer as a bulleted list as a single string. Don't respond with JSON or any other kind of data structure.
-"""
+
+TRY DIFFERENT INPUTS IF THE TOOL RETURNS AN EMPTY RESPONSE.
+"""  # noqa: E501

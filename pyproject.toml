@@ -22,12 +22,19 @@ matplotlib = "^3.8.2"
 openbb-charting = "^1.0.0"
 
 [tool.poetry.group.dev.dependencies]
-black = "^23.11.0"
 pre-commit = "^3.5.0"
-isort = "^5.13.0"
+ruff = "^0.1.7"
 
 [tool.isort]
 profile = "black"
+
+[tool.ruff.lint]
+select = [
+    "E", # pycodestyle
+    "F", # pyflakes
+    "B", # flake8-bugbear
+    "I", # isort
+]
 
 [build-system]
 requires = ["poetry-core"]
