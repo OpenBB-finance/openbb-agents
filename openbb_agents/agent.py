@@ -15,10 +15,14 @@ from openbb_agents.tools import (
 )
 from openbb_agents.utils import get_dependencies
 
+from . import VERBOSE
+
 logger = logging.getLogger(__name__)
 
 
-def openbb_agent(query: str, openbb_tools: Optional[list[str]] = None) -> str:
+def openbb_agent(
+    query: str, openbb_tools: Optional[list[str]] = None, verbose=VERBOSE
+) -> str:
     """Answer a query using the OpenBB Agent equipped with tools.
 
     By default all available openbb tools are used. You can have a query
@@ -43,7 +47,7 @@ def openbb_agent(query: str, openbb_tools: Optional[list[str]] = None) -> str:
 
     """
 
-    subquestion_list = generate_subquestions(query)
+    subquestion_list = generate_subquestions(query, verbose=verbose)
     logger.info("Generated subquestions: %s", subquestion_list)
 
     if openbb_tools:
@@ -61,6 +65,7 @@ def openbb_agent(query: str, openbb_tools: Optional[list[str]] = None) -> str:
             tools=tools,
             subquestion=subquestion,
             answered_subquestions=answered_subquestions,
+            verbose=verbose,
         )
         # TODO: Improve filtering of tools (probably by storing them in a dict)
         tool_names = [tool.name for tool in selected_tools.tools]
@@ -77,12 +82,13 @@ def openbb_agent(query: str, openbb_tools: Optional[list[str]] = None) -> str:
                 dependencies=get_dependencies(
                     answered_subquestions, subquestion
                 ),  # TODO: Just do this in gneerate_subquestion_answer
-            )
+            ),
+            verbose=verbose,
         )
         answered_subquestions.append(answered_subquestion)
         print(answered_subquestion)
 
     # Answer final question
     return generate_final_response(
-        query=query, answered_subquestions=answered_subquestions
+        query=query, answered_subquestions=answered_subquestions, verbose=verbose
     )
