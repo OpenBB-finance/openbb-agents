@@ -8,7 +8,10 @@ utilizing function calling to interact with the OpenBB platform.
 
 
 ## Set-up
-- Create a new virtual environment
+At present, we currently support Python 3.11. If you're using a earlier version
+of Python, your mileage may vary. We'll be adding wider support very soon!
+
+- Create a new virtual environment, with `poetry `
 - `poetry install`
 
 ## Usage
