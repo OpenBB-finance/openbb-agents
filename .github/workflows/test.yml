@@ -1,9 +1,9 @@
-name: Lint
+name: Test
 
-on: [push]
+on: [pull_request]
 
 jobs:
-  lint:
+  unit-test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -18,6 +18,6 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install ruff
-    - name: Run Ruff
-      run : ruff check --output-format=github .
+        poetry install
+    - name: Run Pytest
+      run : pytest tests/
