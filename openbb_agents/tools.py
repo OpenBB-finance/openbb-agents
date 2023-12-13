@@ -2,7 +2,7 @@
 import inspect
 from functools import wraps
 from types import ModuleType
-from typing import List, Union
+from typing import Callable, List, Union
 
 import tiktoken
 from langchain.embeddings import OpenAIEmbeddings
@@ -132,7 +132,9 @@ def return_results(func):
     return wrapper_func
 
 
-def from_openbb_to_langchain_func(openbb_command_root, openbb_callable, openbb_schema):
+def from_openbb_to_langchain_func(
+    openbb_command_root: str, openbb_callable: Callable, openbb_schema: dict
+) -> StructuredTool:
     func_schema = openbb_schema["openbb"]["QueryParams"]["fields"]
     # Lookup the default provider's input arguments...
     default_provider = obb.coverage.commands[openbb_command_root.replace("/", ".")][0]
