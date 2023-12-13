@@ -1,4 +1,10 @@
+import os
+
 from .models import AnsweredSubQuestion, SubQuestion
+
+
+def get_verbosity() -> bool:
+    return os.environ.get("VERBOSE", "False") == "True"
 
 
 def get_dependencies(

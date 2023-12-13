@@ -2,6 +2,7 @@ import argparse
 import logging
 import logging.config
 
+import openbb_agents
 from openbb_agents import agent
 
 logging_config = {
@@ -50,16 +51,18 @@ parser.add_argument(
     "query", metavar="query", type=str, help="The query to send to the agent."
 )
 parser.add_argument(
-    "-v",
-    "--verbose",
-    type=bool,
-    help="Include verbose output.",
-    default=False,
+    "-v", "--verbose", action="store_true", help="Enable verbose logging."
 )
-
 args = parser.parse_args()
-query = args.query
+if args.verbose:
+    openbb_agents.VERBOSE = True
+else:
+    openbb_agents.VERBOSE = False
 
+
+# We only import after passing in command line args to have verbosity propagate.
+
+query = args.query
 result = agent.openbb_agent(query)
 
 print("============")

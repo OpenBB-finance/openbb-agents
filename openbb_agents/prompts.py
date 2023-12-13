@@ -137,6 +137,13 @@ Example output format:
 ... REPEAT AS MANY TIMES AS NECESSARY TO ANSWER THE SUBQUESTION.
 ```
 
+Make multiple queries with different inputs (perhaps by fetching more or less
+data) if your initial attempt at calling the tool doesn't return the information
+you require.
+
+Important: when calling the function again, it is important to use different
+input arguments.
+
 If the tools responds with an error or empty response, attempt calling the tool again using
 different inputs. Don't give up after the first error.
 
