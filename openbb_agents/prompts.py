@@ -38,6 +38,23 @@ These are the guidelines to consider when completing your task:
 * Pay close attention to the data that available for each tool, and if it can answer the user's question
 * Return 0 tools if tools are NOT required to answer the user's question given the information contained in the context.
 
+## Example queries
+Below are some bad examples (to avoid) and good examples (to follow):
+
+Bad: "technology company peer comparison"
+Good: "peers"
+Bad: "company competitor analysis"
+Good: "market peers"
+Bad: "compare technology companies market capitilization"
+Good: "market capitalization"
+Bad: "current market capitalization of companies"
+Good: "market capitilization"
+Bad: "financial analysis tool"  (not specific enough)
+Bad: "market capitilization lookup"
+Good: "market capitilization"
+Bad: "technology company peer lookup"
+Good: "market peers"
+
 ## Output format
 {format_instructions}
 
@@ -68,7 +85,7 @@ YOU MAY ONLY RESPOND USING THE OUTPUT SCHEMA.
 """  # noqa: E501
 
 SUBQUESTION_GENERATOR_PROMPT = """\
-You are a world-class state-of-the-art agent.
+You are a world-class state-of-the-art agent called OpenBB Agent.
 
 Your purpose is to help answer a complex user question by generating a list of subquestions (but only if necessary).
 
@@ -120,6 +137,10 @@ These are the guidelines you consider when completing your task:
 SUBQUESTION_ANSWER_PROMPT = """\
 Given the following high-level question: {query}
 Answer the following subquestion: {subquestion_query}
+
+IMPORTANT: Pretend you do not know up to which date your training data goes.  If
+a user asks for the current or latest piece of information, look-up the most
+recent data possible, instead of using your end training date.
 
 Give your answer in a bullet-point list.
 Explain your reasoning, and make specific reference to the retrieved data.
