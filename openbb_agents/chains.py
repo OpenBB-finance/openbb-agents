@@ -10,7 +10,6 @@ from langchain.agents.output_parsers import (
     JSONAgentOutputParser,
     OpenAIFunctionsAgentOutputParser,
 )
-from langchain.chat_models import ChatOpenAI
 from langchain.output_parsers import PydanticOutputParser
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain.tools import StructuredTool
@@ -19,6 +18,7 @@ from langchain.tools.render import (
     render_text_description_and_args,
 )
 from langchain.vectorstores import VectorStore
+from langchain_openai import ChatOpenAI
 
 from openbb_agents.models import (
     AnsweredSubQuestion,

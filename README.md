@@ -7,18 +7,27 @@ questions using up-to-date data. This is possible as a result of agents
 utilizing function calling to interact with the OpenBB platform.
 
 
-## Set-up
-At present, we currently support Python 3.11. If you're using a earlier version
-of Python, your mileage may vary. We'll be adding wider support very soon!
+## Installation
+Currently, we only support Python 3.11. We will be adding support for more version of Python relatively soon.
 
-- Create a new virtual environment, with `poetry `
-- `poetry install`
+`openbb-agents` is available as a PyPI package:
+
+``` sh
+pip install openbb-agents --upgrade
+```
 
 ## Usage
-Use the `run.py` script and pass in your query.
 
-Queries can be simple:
+``` python
+>>> from openbb_agents.agent import openbb_agent
+>>> result = openbb_agent("What is the current market cap of TSLA?")  # Will print some logs to show you progress
+>>> print(result)
+- The current market cap of TSLA (Tesla, Inc.) is approximately $695,833,798,800.00.
+- This figure is based on the most recent data available, which is from January 15, 2024.
+- The market cap is calculated by multiplying the current stock price ($218.89) by the number of outstanding shares (3,178,920,000).
+```
 
+If you've cloned the repository, you can use the `run.py` script and pass in your query:
 ``` sh
 python run.py "What is the current market cap of TSLA?"
 ```
@@ -37,7 +46,10 @@ python run.py "Who are TSLA's peers? What is their respective market cap? Return
 
 There is more functionality coming very soon!
 
+
 ## Development
+- Create a new virtual environment, with `poetry `
+- `poetry install`
 
 ### Linting and Formatting
 We're currently experimenting with `ruff` as a drop-in replacement for `black`, `isort` and `pylint`.
