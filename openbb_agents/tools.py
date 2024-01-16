@@ -5,11 +5,11 @@ from types import ModuleType
 from typing import Callable, List, Union
 
 import tiktoken
-from langchain.embeddings import OpenAIEmbeddings
 from langchain.schema import Document
 from langchain.tools import StructuredTool
 from langchain.tools.base import ToolException
-from langchain.vectorstores import FAISS, VectorStore
+from langchain_community.vectorstores import FAISS, VectorStore
+from langchain_openai import OpenAIEmbeddings
 from openbb import obb
 from pydantic.v1 import ValidationError, create_model
 from pydantic.v1.fields import FieldInfo

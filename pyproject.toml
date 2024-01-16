@@ -20,6 +20,7 @@ fastapi = "^0.104.1"
 uvicorn = "^0.24.0"
 matplotlib = "^3.8.2"
 openbb-charting = "^1.0.0"
+langchain-openai = "^0.0.2.post1"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.5.0"
