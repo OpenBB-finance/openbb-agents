@@ -10,7 +10,11 @@ parser.add_argument(
 )
 # Add argument for the personal access token
 parser.add_argument(
-    "-t", "--token", type=str, required=True, help="Your personal access token for the OpenBB agent."
+    "-t",
+    "--token",
+    type=str,
+    required=True,
+    help="Your personal access token for the OpenBB agent.",
 )
 # Add argument for verbose logging
 parser.add_argument(

@@ -1,6 +1,8 @@
 import logging
 from typing import Optional
 
+from openbb import obb
+
 from openbb_agents.chains import (
     generate_final_response,
     generate_subquestion_answer,
@@ -14,7 +16,6 @@ from openbb_agents.tools import (
     map_openbb_routes_to_langchain_tools,
 )
 from openbb_agents.utils import get_dependencies
-from openbb import obb
 
 from . import VERBOSE
 
@@ -94,5 +95,7 @@ class OpenBBAgent:
 
         # Answer final question
         return generate_final_response(
-            query=query, answered_subquestions=answered_subquestions, verbose=self.verbose
+            query=query,
+            answered_subquestions=answered_subquestions,
+            verbose=self.verbose,
         )
