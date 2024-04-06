@@ -136,8 +136,23 @@ def from_openbb_to_langchain_func(
     openbb_command_root: str, openbb_callable: Callable, openbb_schema: dict
 ) -> StructuredTool:
     func_schema = openbb_schema["openbb"]["QueryParams"]["fields"]
+
+    # Get list of missing API keys or tokens
+    missing_api_keys = [
+        k.split("_api_key")[0].split("_token")[0]
+        for k, v in list(obb.user.credentials)
+        if v is None
+    ]
+
+    providers = obb.coverage.commands[openbb_command_root.replace("/", ".")]
+
+    valid_providers = [source for source in providers if source not in missing_api_keys]
+
+    if not valid_providers:
+        return None
+
     # Lookup the default provider's input arguments...
-    default_provider = obb.coverage.commands[openbb_command_root.replace("/", ".")][0]
+    default_provider = valid_providers[0]
     # ... and add them to the func schema.
     func_schema.update(openbb_schema[default_provider]["QueryParams"]["fields"])
     pydantic_model = from_schema_to_pydantic_model(
@@ -186,7 +201,9 @@ def map_openbb_functions_to_langchain_tools(
             openbb_callable=callables_dict[route],
             openbb_schema=schemas_dict[route],
         )
-        tools.append(tool)
+        # If the tool is None, we skip it because that means that there's no valid API key provided
+        if tool:
+            tools.append(tool)
     return tools
 
 
@@ -230,9 +247,29 @@ def get_all_openbb_tools():
         route.replace(".", "/") for route in tool_routes if "metrics" not in route
     ]
 
+    # Get list of missing API keys or tokens
+    missing_api_keys = [
+        k.split("_api_key")[0].split("_token")[0]
+        for k, v in list(obb.user.credentials)
+        if v is None
+    ]
+    updated_schema = {}
+
     tools = []
     for route in tool_routes:
         schema = _fetch_schemas(route)
+        # The schema will have as the keys under the right path the sources that are supported
+        # so we will go into obb.user.credentials and need to check if there is at least 1 api key provided
+        # for one of the sources. If the source doesn't have a matching API key that means that the data vendor
+        # didn't set up one.
+        updated_schema[route] = {
+            key: value
+            for key, value in schema[route].items()
+            if key not in missing_api_keys
+        }
+
         callables = _fetch_callables(route)
-        tools += map_openbb_functions_to_langchain_tools(route, schema, callables)
+        tools += map_openbb_functions_to_langchain_tools(
+            route, updated_schema, callables
+        )
     return tools
