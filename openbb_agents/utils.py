@@ -13,6 +13,6 @@ def get_dependencies(
     dependency_subquestions = [
         answered_subq
         for answered_subq in answered_subquestions
-        if answered_subq.subquestion.id in subquestion.depends_on
+        if answered_subq.subquestion.id in (subquestion.depends_on or [])
     ]
     return dependency_subquestions

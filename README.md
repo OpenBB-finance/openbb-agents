@@ -80,12 +80,8 @@ pre-commit install
 ```
 
 ### Testing
-
-We are in the process of adding tests.
-
-We use `pytest` as our test-runner:
-
+We use `pytest` as our test runner:
 ``` sh
-pytest tests/
+pytest -n 8 tests/
 ```
 
