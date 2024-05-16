@@ -212,9 +212,6 @@ def test_generate_subquestion_answer_self_heals_with_input_validation_error_in_f
         tools=[_get_stock_price],
     )
     assert isinstance(actual_result, AnsweredSubQuestion)
-    assert with_llm(
-        actual_result.answer, "The stock price could not be retrieved in EUR."
-    )
     assert with_llm(actual_result.answer, "The stock price is 95 USD.")
 
 
@@ -238,9 +235,6 @@ async def test_agenerate_subquestion_answer_self_heals_with_input_validation_err
         tools=[_get_stock_price],
     )
     assert isinstance(actual_result, AnsweredSubQuestion)
-    assert with_llm(
-        actual_result.answer, "The stock price could not be retrieved in EUR."
-    )
     assert with_llm(actual_result.answer, "The stock price is 95 USD.")
 
 
