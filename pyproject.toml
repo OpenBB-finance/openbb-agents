@@ -11,7 +11,7 @@ jupyterlab = "^4.0.9"
 sentence-transformers = "^2.2.2"
 tiktoken = "^0.5.1"
 faiss-cpu = "^1.7.4"
-magentic = {extras = ["anthropic", "litellm"], version = "^0.23.0"}
+magentic = {extras = ["anthropic", "litellm"], version = "^0.24.0"}
 pydantic = "2.7.1"
 openbb = "4.1.7"
 langchain = "^0.1.17"

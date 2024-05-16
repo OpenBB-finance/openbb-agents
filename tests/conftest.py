@@ -22,7 +22,7 @@ def mock_obb_user_credentials(monkeypatch):
         intrinio_token="another-value",
         benzinga_api_key=None,
     )
-    monkeypatch.setattr(obb.user, "credentials", mock_credentials)
+    monkeypatch.setattr(obb.user, "credentials", mock_credentials)  # type: ignore
 
 
 @pytest.fixture

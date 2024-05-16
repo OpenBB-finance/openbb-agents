@@ -122,13 +122,13 @@ files = [
 
 [[package]]
 name = "anthropic"
-version = "0.25.8"
+version = "0.25.9"
 description = "The official Python library for the anthropic API"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "anthropic-0.25.8-py3-none-any.whl", hash = "sha256:c7a0091916eb22a5e0012b725f5492779eedfcad2da8dc906082e1db7596a65c"},
-    {file = "anthropic-0.25.8.tar.gz", hash = "sha256:93f6063e96d5dbeaa172edc177762f630e55b2f81595cedb760278b95a2dd03e"},
+    {file = "anthropic-0.25.9-py3-none-any.whl", hash = "sha256:d0b17d442160356a531593b237de55d3125cc6fa708f1268c214107e61c81c57"},
+    {file = "anthropic-0.25.9.tar.gz", hash = "sha256:a4ec810b1cfbf3340af99b6f5bf599a83d66986e0f572a5f3bc4ebcab284f629"},
 ]
 
 [package.dependencies]
@@ -1826,13 +1826,13 @@ requests = ">=2,<3"
 
 [[package]]
 name = "litellm"
-version = "1.37.0"
+version = "1.37.12"
 description = "Library to easily interface with LLM API providers"
 optional = false
 python-versions = "!=2.7.*,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,!=3.7.*,>=3.8"
 files = [
-    {file = "litellm-1.37.0-py3-none-any.whl", hash = "sha256:74f7ccf8c10491aa393cd1a77aff4db9fd61bbffe52a7326c96811db823e1005"},
-    {file = "litellm-1.37.0.tar.gz", hash = "sha256:441fbdc119f3336f1693d2022c1887d6d98453dbab32920318c823ad8ddf0d66"},
+    {file = "litellm-1.37.12-py3-none-any.whl", hash = "sha256:5b42b3c98e329a24f48112f488dd1c5e4c635fb5b1a098b50c2cab789cb08172"},
+    {file = "litellm-1.37.12.tar.gz", hash = "sha256:2188991e9aa903c9adcec9a265b58ad3b6d9acbe0b0f194b3321d69fa4102729"},
 ]
 
 [package.dependencies]
@@ -1848,7 +1848,7 @@ tokenizers = "*"
 
 [package.extras]
 extra-proxy = ["azure-identity (>=1.15.0,<2.0.0)", "azure-keyvault-secrets (>=4.8.0,<5.0.0)", "google-cloud-kms (>=2.21.3,<3.0.0)", "prisma (==0.11.0)", "resend (>=0.8.0,<0.9.0)"]
-proxy = ["PyJWT (>=2.8.0,<3.0.0)", "apscheduler (>=3.10.4,<4.0.0)", "backoff", "cryptography (>=42.0.5,<43.0.0)", "fastapi (>=0.109.1,<0.110.0)", "fastapi-sso (>=0.10.0,<0.11.0)", "gunicorn (>=22.0.0,<23.0.0)", "orjson (>=3.9.7,<4.0.0)", "python-multipart (>=0.0.9,<0.0.10)", "pyyaml (>=6.0.1,<7.0.0)", "rq", "uvicorn (>=0.22.0,<0.23.0)"]
+proxy = ["PyJWT (>=2.8.0,<3.0.0)", "apscheduler (>=3.10.4,<4.0.0)", "backoff", "cryptography (>=42.0.5,<43.0.0)", "fastapi (>=0.111.0,<0.112.0)", "fastapi-sso (>=0.10.0,<0.11.0)", "gunicorn (>=22.0.0,<23.0.0)", "orjson (>=3.9.7,<4.0.0)", "python-multipart (>=0.0.9,<0.0.10)", "pyyaml (>=6.0.1,<7.0.0)", "rq", "uvicorn (>=0.22.0,<0.23.0)"]
 
 [[package]]
 name = "lxml"
@@ -1945,13 +1945,13 @@ source = ["Cython (>=3.0.7)"]
 
 [[package]]
 name = "magentic"
-version = "0.23.0"
+version = "0.24.0"
 description = "Seamlessly integrate LLMs as Python functions"
 optional = false
 python-versions = "<4.0,>=3.10"
 files = [
-    {file = "magentic-0.23.0-py3-none-any.whl", hash = "sha256:aa678546f8dee7794efdca99e7a509b942e20e7d8a100f57e7e1ec25f135737e"},
-    {file = "magentic-0.23.0.tar.gz", hash = "sha256:8a4e7fcb4c3bddfe1f58da8c0dbdc2bcc9e3575ab88938dbdeed38f06ac7bedd"},
+    {file = "magentic-0.24.0-py3-none-any.whl", hash = "sha256:0193d16f7eb322dfca1bbb6045e32587fa1bb252b7965fb6494c0f3d6eaf1ea8"},
+    {file = "magentic-0.24.0.tar.gz", hash = "sha256:f4e47410c096337564e7dc693ad0ea95b67f22a76bb930bfc8753169fd2c2e60"},
 ]
 
 [package.dependencies]
@@ -5672,4 +5672,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11,<3.12"
-content-hash = "6219a59550206675edb997d68463df8b765f9b18720f68559277a6c1eae6feeb"
+content-hash = "ac95d59495c93995ea3a6c6f8d0920d3c973d1b2dad07586a41aef29e6c34e5e"
