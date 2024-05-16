@@ -274,20 +274,11 @@ def _build_messages_for_validation_error(
     val_err: ValidationError,
 ) -> list[Any]:
     logger.error(f"Input schema validation error: {val_err}")
-    # Sidestep `magentic`'s input validation, which will still
-    # occur when we pass `function_call` to `AssistantMessage`
-    # https://github.com/jackmpcollins/magentic/issues/211
-    dummy = lambda *args, **kwargs: ...  # noqa: E731
-    dummy.__name__ = function_call.function.__name__
-    new_function_call = FunctionCall(
-        function=dummy,
-        **function_call.arguments,
-    )
     return [
-        AssistantMessage(new_function_call),
+        AssistantMessage(function_call),
         FunctionResultMessage(
             content=str(val_err),
-            function_call=new_function_call,
+            function_call=function_call,
         ),
     ]
 
