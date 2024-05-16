@@ -26,5 +26,9 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         poetry install
+    - name: Build OpenBB
+      run: poetry run python -c "import openbb; openbb.build(); print('Done')"
     - name: Run Pytest
-      run : poetry run pytest tests/
+      env: 
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      run : poetry run pytest -n 8 tests/
