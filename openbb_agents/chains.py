@@ -16,7 +16,6 @@ from magentic import (
     prompt,
     prompt_chain,
 )
-from pydantic import ValidationError
 
 from openbb_agents.models import (
     AnsweredSubQuestion,
@@ -251,10 +250,6 @@ def _handle_function_call(function_call: FunctionCall) -> list[Any]:
         return _build_messages_for_function_call(
             function_call=function_call, result=result
         )
-    except ValidationError as val_err:
-        return _build_messages_for_validation_error(
-            function_call=function_call, val_err=val_err
-        )
     except Exception as err:
         return _build_messages_for_generic_error(function_call=function_call, err=err)
 
@@ -266,20 +261,6 @@ def _build_messages_for_function_call(
     return [
         AssistantMessage(function_call),
         FunctionResultMessage(content=str(result), function_call=function_call),
-    ]
-
-
-def _build_messages_for_validation_error(
-    function_call: FunctionCall,
-    val_err: ValidationError,
-) -> list[Any]:
-    logger.error(f"Input schema validation error: {val_err}")
-    return [
-        AssistantMessage(function_call),
-        FunctionResultMessage(
-            content=str(val_err),
-            function_call=function_call,
-        ),
     ]
 
 
