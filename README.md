@@ -17,6 +17,17 @@ pip install openbb-agents --upgrade
 ```
 
 ## Setup
+### OpenAI API keys
+
+To use OpenBB LLM Agents, you need an OpenAI API key. Follow these steps:
+
+1. **Get API Key**: Sign up on [OpenAI](https://www.openai.com/) and get your API key.
+2. **Set Environment Variable**: Add this to your shell profile (`.bashrc`, `.zshrc`, etc.):
+    ```sh
+    export OPENAI_API_KEY="your_openai_api_key"
+    ```
+
+### OpenBB Platform data provider credentials
 To use the OpenBB Platform functions, you need to configure the necessary [data provider API credentials](https://docs.openbb.co/platform/usage/api_keys). This can be done in one of two ways:
 
 1. **Local Configuration**: Specify your credentials in a `~/.openbb_platform/user_settings.json` file. Follow the [local environment setup guide](https://docs.openbb.co/platform/usage/api_keys#local-environment) for detailed instructions.
