@@ -1,10 +1,10 @@
 # OpenBB-agents
-Active work-in-progress. Consider pre-alpha for now.
+Work-in-progress.
 
-This is a project that leverages LLMs and OpenBB Platform to create financial
+This is a project that leverages LLMs and [OpenBB Platform](https://github.com/OpenBB-finance/OpenBBTerminal/tree/develop/openbb_platform) to create financial
 analyst agents that can autonomously perform financial research, and answer
 questions using up-to-date data. This is possible as a result of agents
-utilizing function calling to interact with the OpenBB platform.
+utilizing function calling to interact with the OpenBB Platform.
 
 
 ## Installation
@@ -15,6 +15,15 @@ Currently, we only support Python 3.11. We will be adding support for more versi
 ``` sh
 pip install openbb-agents --upgrade
 ```
+
+## Setup
+All underlying LLM functions are OpenBB Platform functions. This means that, for
+certain data providers, you must configure [data provider API credentials](https://docs.openbb.co/platform/usage/api_keys) for use with OpenBB Platform. You can set-up
+credentials in two ways:
+-  [Locally by specifying a `~/.openbb_platform/user_settings.json`
+file](https://docs.openbb.co/platform/usage/api_keys#local-environment)
+- Using your [OpenBB Hub](https://my.openbb.co/) account and creating a personal access token (PAT), which can be passed to the agent as an argument.
+
 
 ## Usage
 
@@ -27,24 +36,36 @@ pip install openbb-agents --upgrade
 - The market cap is calculated by multiplying the current stock price ($218.89) by the number of outstanding shares (3,178,920,000).
 ```
 
-If you've cloned the repository, you can use the `run.py` script and pass in your query:
-``` sh
-python run.py "What is the current market cap of TSLA?"
+To use your data provider credentials stored in OpenBB Hub, you can pass in your OpenBB Hub PAT directly to the agent:
+
+``` python
+>>> openbb_agent("What is the stock price of AAPL?", openbb_pat="<openbb-hub-pat>")
 ```
 
-Queries can be complex:
+**Note:** The agent automatically configures itself based on which data provider
+credentials are available.  This means that certain data sources and functions
+may not be available without the proper API key. By default, `yfinance` is
+included as a data provider, which does not require an API key. For a list of functions and their supported data providers, see the [OpenBB Platform documentation](https://docs.openbb.co/platform/reference).
 
-``` sh
-python run.py "Perform a fundamentals financial analysis of AMZN using the most recently available data. What do you find that's interesting?"
+
+Queries can be relatively complex:
+
+```python
+>>> openbb_agent("Perform a fundamentals financial analysis of AMZN using the most recently available data. What do you find that's interesting?")
 ```
 
 Queries can also have temporal dependencies (i.e the answers of previous subquestions are required to answer a later subquestion):
 
-``` sh
-python run.py "Who are TSLA's peers? What is their respective market cap? Return the results in _descending_ order of market cap."
+``` python
+>>> openbb_agent("Who are TSLA's peers? What is their respective market cap? Return the results in _descending_ order of market cap.")
 ```
 
-There is more functionality coming very soon!
+An `async` variant of the agent is also available:
+
+``` python
+>>> from openbb_agents.agent import aopenbb_agent
+>>> await aopenbb_agent("What is the current market cap of TSLA?")
+```
 
 
 ## Development
