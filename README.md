@@ -1,4 +1,4 @@
-# OpenBB-agents
+# OpenBB LLM Agents
 Work-in-progress.
 
 This is a project that leverages LLMs and [OpenBB Platform](https://github.com/OpenBB-finance/OpenBBTerminal/tree/develop/openbb_platform) to create financial
@@ -17,12 +17,10 @@ pip install openbb-agents --upgrade
 ```
 
 ## Setup
-All underlying LLM functions are OpenBB Platform functions. This means that, for
-certain data providers, you must configure [data provider API credentials](https://docs.openbb.co/platform/usage/api_keys) for use with OpenBB Platform. You can set-up
-credentials in two ways:
--  [Locally by specifying a `~/.openbb_platform/user_settings.json`
-file](https://docs.openbb.co/platform/usage/api_keys#local-environment)
-- Using your [OpenBB Hub](https://my.openbb.co/) account and creating a personal access token (PAT), which can be passed to the agent as an argument.
+To use the OpenBB Platform functions, you need to configure the necessary [data provider API credentials](https://docs.openbb.co/platform/usage/api_keys). This can be done in one of two ways:
+
+1. **Local Configuration**: Specify your credentials in a `~/.openbb_platform/user_settings.json` file. Follow the [local environment setup guide](https://docs.openbb.co/platform/usage/api_keys#local-environment) for detailed instructions.
+2. **OpenBB Hub**: Create a personal access token (PAT) via your [OpenBB Hub](https://my.openbb.co/) account. This PAT can then be passed to the agent as an argument.
 
 
 ## Usage
@@ -42,11 +40,7 @@ To use your data provider credentials stored in OpenBB Hub, you can pass in your
 >>> openbb_agent("What is the stock price of AAPL?", openbb_pat="<openbb-hub-pat>")
 ```
 
-**Note:** The agent automatically configures itself based on which data provider
-credentials are available.  This means that certain data sources and functions
-may not be available without the proper API key. By default, `yfinance` is
-included as a data provider, which does not require an API key. For a list of functions and their supported data providers, see the [OpenBB Platform documentation](https://docs.openbb.co/platform/reference).
-
+**Note:** The agent dynamically configures itself based on the available data provider credentials. Consequently, certain data sources and functions may be inaccessible without the appropriate API key. By default, `yfinance` is included as a data provider and does not require an API key. For a comprehensive list of functions and their supported data providers, refer to the [OpenBB Platform documentation](https://docs.openbb.co/platform/reference).
 
 Queries can be relatively complex:
 
