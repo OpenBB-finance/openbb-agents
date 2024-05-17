@@ -16,6 +16,7 @@ from .models import AnsweredSubQuestion, SubQuestion
 from .tools import (
     build_openbb_tool_vector_index,
     build_vector_index_from_openbb_function_descriptions,
+    get_valid_list_of_providers,
     map_name_to_openbb_function_description,
 )
 from .utils import get_dependencies
@@ -23,7 +24,9 @@ from .utils import get_dependencies
 logger = logging.getLogger(__name__)
 
 
-def openbb_agent(query: str, openbb_tools: list[str] | None = None) -> str:
+def openbb_agent(
+    query: str, openbb_tools: list[str] | None = None, openbb_pat: str | None = None
+) -> str:
     """Answer a query using the OpenBB Agent equipped with tools.
 
     By default all available openbb tools are used. You can have a query
@@ -33,10 +36,14 @@ def openbb_agent(query: str, openbb_tools: list[str] | None = None) -> str:
     Parameters
     ----------
     query : str
-        The query you want to have answered.
-    openbb_tools : list[Callable]
-        Optional. Specify the OpenBB functions you want to use. If not
-        specified, every available OpenBB tool will be used.
+        The query to be answered.
+    openbb_tools : list[str] | None, optional
+        A list of specific OpenBB functions to use. If not provided, all
+        available OpenBB tools that you have valid credentials for will be
+        utilized. See `openbb_pat`.
+    openbb_pat : str | None, optional
+        The OpenBB PAT for retrieving credentials from the OpenBB Hub. If not
+        provided, local OpenBB credentials will be used.
 
     Examples
     --------
@@ -47,6 +54,11 @@ def openbb_agent(query: str, openbb_tools: list[str] | None = None) -> str:
     ...              openbb_tools=['.equity.price.quote'])
 
     """
+    if openbb_pat:
+        from openbb import obb
+
+        obb.account.login(pat=openbb_pat)
+
     tool_vector_index = _handle_tool_vector_index(openbb_tools)
     subquestions = generate_subquestions_from_query(user_query=query)
 
@@ -271,7 +283,10 @@ def _get_answerable_subquestions(
 
 def _handle_tool_vector_index(openbb_tools: list[str] | None) -> VectorStore:
     if not openbb_tools:
-        logger.info("Using all available OpenBB tools.")
+        logger.info(
+            "Using all available OpenBB tools with providers: %s",
+            get_valid_list_of_providers(),
+        )
         tool_vector_index = build_openbb_tool_vector_index()
     else:
         logger.info("Using specified OpenBB tools: %s", openbb_tools)
