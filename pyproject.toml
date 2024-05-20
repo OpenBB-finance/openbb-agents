@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "openbb-agents"
-version = "0.0.2"
+version = "0.0.3"
 description = "LLMs X OpenBB Platform"
 authors = ["Michael Struwig <michael.struwig@openbb.finance>"]
 readme = "README.md"
