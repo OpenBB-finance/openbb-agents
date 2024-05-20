@@ -8,7 +8,7 @@ utilizing function calling to interact with the OpenBB Platform.
 
 
 ## Installation
-Currently, we only support Python 3.11. We will be adding support for more version of Python relatively soon.
+Currently, we support Python 3.10+. We will be adding support for more version of Python relatively soon.
 
 `openbb-agents` is available as a PyPI package:
 
