@@ -150,6 +150,8 @@ def _get_output_type_hint(tool: Callable) -> type | BaseModel | None:
 def append_tools_to_vector_index(
     vector_store: VectorStore, tools: list[Callable]
 ) -> VectorStore:
+    logger.info("Adding user-specified tools to vector index...")
+
     for tool in tools:
         if not _tool_has_unique_name(vector_store=vector_store, tool=tool):
             logger.warning(
