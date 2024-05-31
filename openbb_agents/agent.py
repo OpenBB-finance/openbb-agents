@@ -19,13 +19,16 @@ from .tools import (
     get_valid_list_of_providers,
     map_name_to_openbb_function_description,
 )
-from .utils import get_dependencies
+from .utils import configure_logging, get_dependencies
 
 logger = logging.getLogger(__name__)
 
 
 def openbb_agent(
-    query: str, openbb_tools: list[str] | None = None, openbb_pat: str | None = None
+    query: str,
+    openbb_tools: list[str] | None = None,
+    openbb_pat: str | None = None,
+    verbose: bool = True,
 ) -> str:
     """Answer a query using the OpenBB Agent equipped with tools.
 
@@ -54,14 +57,16 @@ def openbb_agent(
     ...              openbb_tools=['.equity.price.quote'])
 
     """
+    configure_logging(verbose)
     if openbb_pat:
         from openbb import obb
 
         obb.account.login(pat=openbb_pat)
 
     tool_vector_index = _handle_tool_vector_index(openbb_tools)
-    subquestions = generate_subquestions_from_query(user_query=query)
 
+    logger.info("Generating subquestions for user query: %s", query)
+    subquestions = generate_subquestions_from_query(user_query=query)
     logger.info("Generated subquestions: %s", subquestions)
 
     answered_subquestions = []
@@ -85,7 +90,9 @@ def openbb_agent(
     )
 
 
-async def aopenbb_agent(query: str, openbb_tools: list[str] | None = None) -> str:
+async def aopenbb_agent(
+    query: str, openbb_tools: list[str] | None = None, verbose: bool = True
+) -> str:
     """Answer a query using the OpenBB Agent equipped with tools.
 
     Async variant of `openbb_agent`.
@@ -111,6 +118,7 @@ async def aopenbb_agent(query: str, openbb_tools: list[str] | None = None) -> st
     ...              openbb_tools=['.equity.price.quote'])
 
     """
+    configure_logging(verbose)
     tool_vector_index = _handle_tool_vector_index(openbb_tools)
 
     subquestions = await agenerate_subquestions_from_query(user_query=query)
