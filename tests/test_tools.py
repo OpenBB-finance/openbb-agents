@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field
 from openbb_agents.models import OpenBBFunctionDescription
 from openbb_agents.tools import (
     _get_flat_properties_from_pydantic_model_as_str,
+    append_tools_to_vector_index,
     build_vector_index_from_openbb_function_descriptions,
     get_valid_list_of_providers,
     get_valid_openbb_function_descriptions,
@@ -107,3 +108,85 @@ def test_build_vector_index(
         openbb_function_descriptions=test_openbb_function_descriptions
     )
     assert len(actual_result.docstore._dict) == 2  # type: ignore
+
+
+def test_append_tools_to_vector_index(openbb_tool_vector_index):
+    def test_tool() -> str:
+        """This is a test tool."""
+        return "test"
+
+    actual_result = append_tools_to_vector_index(
+        vector_store=openbb_tool_vector_index,
+        tools=[test_tool],
+    )
+
+    all_tools = [doc for doc in actual_result.docstore._dict.values()]
+
+    inserted_tool = None
+    for tool in all_tools:
+        if tool.metadata["tool_name"] == "test_tool":
+            inserted_tool = tool
+            break
+
+    assert inserted_tool is not None
+    assert inserted_tool.page_content == "test_tool\nThis is a test tool.\nOutput:\nstr"
+    assert inserted_tool.metadata["callable"].__name__ == test_tool.__name__
+
+
+def test_append_tools_to_vector_index_pydantic_return_type(openbb_tool_vector_index):
+    class TestReturnModel(BaseModel):
+        price: float = Field(description="The price of the stock")
+        volume: int = Field(description="The volume of the stock")
+
+    def test_tool() -> TestReturnModel:
+        """This is a test tool."""
+        return TestReturnModel(price=100, volume=1000)
+
+    actual_result = append_tools_to_vector_index(
+        vector_store=openbb_tool_vector_index,
+        tools=[test_tool],
+    )
+
+    all_tools = [doc for doc in actual_result.docstore._dict.values()]
+
+    inserted_tool = None
+    for tool in all_tools:
+        if tool.metadata["tool_name"] == "test_tool":
+            inserted_tool = tool
+            break
+
+    assert inserted_tool is not None
+    assert (
+        inserted_tool.page_content
+        == "test_tool\nThis is a test tool.\nOutput:\nprice: The price of the stock\nvolume: The volume of the stock\n"  # noqa:E501
+    )  # noqa: E501
+    assert inserted_tool.metadata["callable"].__name__ == test_tool.__name__
+
+
+def test_append_tools_to_vector_index_duplicate_input(openbb_tool_vector_index):
+    def test_tool() -> str:
+        """This is a test tool."""
+        return "test"
+
+    vector_store = append_tools_to_vector_index(
+        vector_store=openbb_tool_vector_index,
+        tools=[test_tool],
+    )
+
+    all_tools = [doc for doc in vector_store.docstore._dict.values()]
+
+    inserted_tool = None
+    for tool in all_tools:
+        if tool.metadata["tool_name"] == "test_tool":
+            inserted_tool = tool
+            break
+
+    assert inserted_tool is not None
+
+    # Attempt to insert the same tool again
+    new_vector_store = append_tools_to_vector_index(
+        vector_store=vector_store,
+        tools=[test_tool],
+    )
+
+    assert len(new_vector_store.docstore._dict) == len(vector_store.docstore._dict)

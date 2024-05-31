@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from typing import Callable
 
 from langchain.vectorstores import VectorStore
 
@@ -14,6 +15,7 @@ from .chains import (
 )
 from .models import AnsweredSubQuestion, SubQuestion
 from .tools import (
+    append_tools_to_vector_index,
     build_openbb_tool_vector_index,
     build_vector_index_from_openbb_function_descriptions,
     get_valid_list_of_providers,
@@ -28,6 +30,7 @@ def openbb_agent(
     query: str,
     openbb_tools: list[str] | None = None,
     openbb_pat: str | None = None,
+    extra_tools: list[Callable] | None = None,
     verbose: bool = True,
 ) -> str:
     """Answer a query using the OpenBB Agent equipped with tools.
@@ -64,6 +67,11 @@ def openbb_agent(
         obb.account.login(pat=openbb_pat)
 
     tool_vector_index = _handle_tool_vector_index(openbb_tools)
+    if extra_tools:
+        tool_vector_index = append_tools_to_vector_index(
+            vector_store=tool_vector_index,
+            tools=extra_tools,
+        )
 
     logger.info("Generating subquestions for user query: %s", query)
     subquestions = generate_subquestions_from_query(user_query=query)
@@ -91,7 +99,10 @@ def openbb_agent(
 
 
 async def aopenbb_agent(
-    query: str, openbb_tools: list[str] | None = None, verbose: bool = True
+    query: str,
+    openbb_tools: list[str] | None = None,
+    extra_tools: list[Callable] | None = None,
+    verbose: bool = True,
 ) -> str:
     """Answer a query using the OpenBB Agent equipped with tools.
 
@@ -120,7 +131,11 @@ async def aopenbb_agent(
     """
     configure_logging(verbose)
     tool_vector_index = _handle_tool_vector_index(openbb_tools)
-
+    if extra_tools:
+        tool_vector_index = append_tools_to_vector_index(
+            vector_store=tool_vector_index,
+            tools=extra_tools,
+        )
     subquestions = await agenerate_subquestions_from_query(user_query=query)
     answered_subquestions = await _aprocess_subquestions(
         user_query=query,
