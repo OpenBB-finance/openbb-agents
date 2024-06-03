@@ -33,6 +33,8 @@ To use the OpenBB Platform functions, you need to configure the necessary [data 
 1. **Local Configuration**: Specify your credentials in a `~/.openbb_platform/user_settings.json` file. Follow the [local environment setup guide](https://docs.openbb.co/platform/usage/api_keys#local-environment) for detailed instructions.
 2. **OpenBB Hub**: Create a personal access token (PAT) via your [OpenBB Hub](https://my.openbb.co/) account. This PAT can then be passed to the agent as an argument.
 
+## Getting started
+It is highly recommended to take a look at the [Getting Started Notebook](https://github.com/OpenBB-finance/openbb-agents/blob/main/getting_started.ipynb), which runs you through the features of `openbb-agents` at a high level.
 
 ## Usage
 

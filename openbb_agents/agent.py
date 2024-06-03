@@ -35,10 +35,6 @@ def openbb_agent(
 ) -> str:
     """Answer a query using the OpenBB Agent equipped with tools.
 
-    By default all available openbb tools are used. You can have a query
-    answered using a smaller subset of OpenBB tools by using the `openbb_tools`
-    argument.
-
     Parameters
     ----------
     query : str
@@ -50,6 +46,12 @@ def openbb_agent(
     openbb_pat : str | None, optional
         The OpenBB PAT for retrieving credentials from the OpenBB Hub. If not
         provided, local OpenBB credentials will be used.
+    extra_tools : list[Callable] | None, optional
+        A list of extra tools to add to the tool index, which makes it available
+        to the LLM to use.
+    verbose : bool, optional
+        Whether to print out additional information about the agent's behavior.
+        Defaults to True.
 
     Examples
     --------
@@ -58,7 +60,6 @@ def openbb_agent(
     >>> # Use only the specified tools to answer the query
     >>> openbb_agent("What is the stock price of TSLA?",
     ...              openbb_tools=['.equity.price.quote'])
-
     """
     configure_logging(verbose)
     if openbb_pat:
@@ -108,17 +109,23 @@ async def aopenbb_agent(
 
     Async variant of `openbb_agent`.
 
-    By default all available openbb tools are used. You can have a query
-    answered using a smaller subset of OpenBB tools by using the `openbb_tools`
-    argument.
-
     Parameters
     ----------
     query : str
-        The query you want to have answered.
-    openbb_tools : list[Callable]
-        Optional. Specify the OpenBB functions you want to use. If not
-        specified, every available OpenBB tool will be used.
+        The query to be answered.
+    openbb_tools : list[str] | None, optional
+        A list of specific OpenBB functions to use. If not provided, all
+        available OpenBB tools that you have valid credentials for will be
+        utilized. See `openbb_pat`.
+    openbb_pat : str | None, optional
+        The OpenBB PAT for retrieving credentials from the OpenBB Hub. If not
+        provided, local OpenBB credentials will be used.
+    extra_tools : list[Callable] | None, optional
+        A list of extra tools to add to the tool index, which makes it available
+        to the LLM to use.
+    verbose : bool, optional
+        Whether to print out additional information about the agent's behavior.
+        Defaults to True.
 
     Examples
     --------
