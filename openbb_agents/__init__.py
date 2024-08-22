@@ -1,4 +1,4 @@
-import logging
+ import logging
 import logging.config
 
 from openbb_agents.utils import get_verbosity
