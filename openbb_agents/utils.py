@@ -2,6 +2,9 @@ import logging
 import logging.config
 import os
 
+from langchain_openai import OpenAIEmbeddings
+from langchain_ollama import OllamaEmbeddings
+
 from .models import AnsweredSubQuestion, SubQuestion
 
 
@@ -64,3 +67,17 @@ def get_dependencies(
         if answered_subq.subquestion.id in (subquestion.depends_on or [])
     ]
     return dependency_subquestions
+
+def get_chat_model_name(default: str):
+    return os.environ.get("CHAT_MODEL", default=default)
+
+def get_chat_model_base_url():
+    return os.environ.get("CHAT_MODEL_BASE_URL", None)
+
+def get_embeddings():
+    ollama_embedding_model = os.environ.get("OLLAMA_EMBEDDING_MODEL", None)
+    if ollama_embedding_model is not None:
+        return OllamaEmbeddings(
+            model=ollama_embedding_model
+        )
+    return OpenAIEmbeddings()

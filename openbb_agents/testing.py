@@ -1,6 +1,10 @@
 from magentic import OpenaiChatModel, prompt
 from pydantic import BaseModel, Field
 
+from openbb_agents.utils import (
+    get_chat_model_name,
+    get_chat_model_base_url
+)
 
 class AssertResult(BaseModel):
     assessment: str = Field(
@@ -29,7 +33,8 @@ def with_llm(model_output, assertion) -> bool:
     @prompt(
         "Given the following model output: {model_output}, determine if the following assertion is true: {assertion}",  # noqa: E501
         model=OpenaiChatModel(
-            model="gpt-3.5-turbo",
+            model=get_chat_model_name("gpt-3.5-turbo"),
+            base_url=get_chat_model_base_url(),
             temperature=0.0,
         ),
     )
